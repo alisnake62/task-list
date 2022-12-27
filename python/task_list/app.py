@@ -70,6 +70,9 @@ class Task:
         self.description = description
         self.done = done
 
+    def __str__(self) -> str:
+        return f"  [{'x' if self.is_done() else ' '}] {self.id}: {self.description}"
+
     def set_done(self, done: bool) -> None:
         self.done = done
 
@@ -84,6 +87,9 @@ class Project:
     def __init__(self, name:str) -> None:
         self._name = name
         self._tasks:List[Task] = []
+
+    def __str__(self) -> str:
+        return self._name
 
     def addTask(self, task:Task) -> None:
         self._tasks.append(task)
@@ -118,11 +124,7 @@ class TaskList:
         commandLine.execute(taskList=self)
 
     def show(self) -> None:
-        for project in self.tasks:
-            self.console.print(project._name)
-            for task in project._tasks:
-                self.console.print(f"  [{'x' if task.is_done() else ' '}] {task.id}: {task.description}")
-            self.console.print()
+        self.console.printShow(projects=self.tasks)
 
     def add(self, command_line: str) -> None:
         sub_command_rest = command_line.split(" ", 1)
@@ -145,8 +147,7 @@ class TaskList:
     def add_task(self, project: str, description: str) -> None:
         project_tasks = self.findProjectByName(name=project)
         if project_tasks is None:
-            self.console.print(f"Could not find a project with the name {project}.")
-            self.console.print()
+            self.console.printProjectNotFound(projectName=project)
             return
         task = Task(self.next_id(), description, False)
         project_tasks.addTask(task=task)
@@ -164,21 +165,13 @@ class TaskList:
             if task is not None: 
                 task.set_done(done)
                 return
-        self.console.print(f"Could not find a task with an ID of {id_}")
-        self.console.print()
+        self.console.printTaskNotFound(id=id_)
 
     def help(self) -> None:
-        self.console.print("Commands:")
-        self.console.print("  show")
-        self.console.print("  add project <project name>")
-        self.console.print("  add task <project name> <task description>")
-        self.console.print("  check <task ID>")
-        self.console.print("  uncheck <task ID>")
-        self.console.print()
+        self.console.printHelp()
 
     def error(self, command: str) -> None:
-        self.console.print(f"I don't know what the command {command} is.")
-        self.console.print()
+        self.console.printError(command=command)
 
     def next_id(self) -> int:
         self.last_id += 1
