@@ -32,37 +32,54 @@ class Command:
     def error(self, taskList:'TaskList'):
         taskList.error(self._value)
 
+class SubCommand:
+
+    _expectedValue = ["project", "task"]
+
+    def __init__(self, value:str) -> None:
+        self._value = value
+
+    def isProject(self):
+        return self._value == "project"
+
+    def isTask(self):
+        return self._value == "task"
+
 class Argument:
     def __init__(self, value:str) -> None:
         self._value = value
 
-    def add(self, taskList:'TaskList'):
-        taskList.add(self._value)
-
-    def check(self, taskList:'TaskList'):
-        taskList.check(self._value)
-
-    def uncheck(self, taskList:'TaskList'):
-        taskList.uncheck(self._value)
-
 class CommandLine:
 
     _command    = None
-    _argument   = None
+    _subCommand = None
+    _arguments   = []
     def __init__(self, value:str) -> None:
 
         command_rest = value.split(" ", 1)
-        self._command   = Command(value=command_rest[0])
-        if len(command_rest) > 1: 
-            self._argument  = Argument(value=command_rest[1])
+        self._command = Command(value=command_rest[0])
+
+        if len(command_rest) >= 2:
+            command_rest2 = command_rest[1].split(" ", 1)
+            if command_rest2[0] in ["project", "task"]:
+                self._subCommand = SubCommand(value=command_rest2[0])
+                self._arguments = [Argument(value=argStr) for argStr in command_rest2[1].split(" ")]
+            else:
+                self._arguments = [Argument(value=argStr) for argStr in command_rest[1].split(" ")]
 
     def execute(self, taskList:'TaskList') -> None:
         if self._command.isShow()   : taskList.show()
-        if self._command.isAdd()    : self._argument.add(taskList=taskList)
-        if self._command.isCheck()  : self._argument.check(taskList=taskList)
-        if self._command.isUncheck(): self._argument.uncheck(taskList=taskList)
+        if self._command.isAdd()    : taskList.add(commandLine=self)
+        if self._command.isCheck()  : taskList.check(commandLine=self)
+        if self._command.isUncheck(): taskList.uncheck(commandLine=self)
         if self._command.isHelp()   : taskList.help()
-        if self._command.isError()  : self._command.error(taskList=taskList)
+        if self._command.isError()  : taskList.error(commandLine=self)
+
+    def subCommandIsProject(self):
+        return self._subCommand.isProject()
+
+    def subCommandIsTask(self):
+        return self._subCommand.isTask()
 
 class Task:
     def __init__(self, id_: int, description: str, done: bool) -> None:
@@ -126,14 +143,11 @@ class TaskList:
     def show(self) -> None:
         self.console.printShow(projects=self.tasks)
 
-    def add(self, command_line: str) -> None:
-        sub_command_rest = command_line.split(" ", 1)
-        sub_command = sub_command_rest[0]
-        if sub_command == "project":
-            self.add_project(sub_command_rest[1])
-        elif sub_command == "task":
-            project_task = sub_command_rest[1].split(" ", 1)
-            self.add_task(project_task[0], project_task[1])
+    def add(self, commandLine: CommandLine) -> None:
+        if commandLine.subCommandIsProject():
+            self.add_project(commandLine)
+        if commandLine.subCommandIsTask():
+            self.add_task(commandLine)
 
     def findProjectByName(self, name:str) -> Project:
         for project in self.tasks:
@@ -141,10 +155,13 @@ class TaskList:
                 return project
         return None
 
-    def add_project(self, name: str) -> None:
-        self.tasks.append(Project(name=name))
+    def add_project(self, commandLine: CommandLine) -> None:
+        self.tasks.append(Project(name=commandLine._arguments[0]._value))
 
-    def add_task(self, project: str, description: str) -> None:
+    def add_task(self, commandLine:CommandLine) -> None:
+        arguments = commandLine._arguments
+        project = arguments[0]._value
+        description = arguments[1]._value
         project_tasks = self.findProjectByName(name=project)
         if project_tasks is None:
             self.console.printProjectNotFound(projectName=project)
@@ -152,10 +169,12 @@ class TaskList:
         task = Task(self.next_id(), description, False)
         project_tasks.addTask(task=task)
 
-    def check(self, id_string: str) -> None:
+    def check(self, commandLine: CommandLine) -> None:
+        id_string = commandLine._arguments[0]._value
         self.set_done(id_string, True)
 
-    def uncheck(self, id_string: str) -> None:
+    def uncheck(self, commandLine: CommandLine) -> None:
+        id_string = commandLine._arguments[0]._value
         self.set_done(id_string, False)
 
     def set_done(self, id_string: str, done: bool) -> None:
@@ -170,8 +189,8 @@ class TaskList:
     def help(self) -> None:
         self.console.printHelp()
 
-    def error(self, command: str) -> None:
-        self.console.printError(command=command)
+    def error(self, commandLine: CommandLine) -> None:
+        self.console.printError(command=commandLine._command._value)
 
     def next_id(self) -> int:
         self.last_id += 1
