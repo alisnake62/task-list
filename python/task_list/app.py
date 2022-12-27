@@ -75,7 +75,7 @@ class ActionUtils:
         return None
 
     def _addProject(self, commandLine: 'CommandLine') -> None:
-        self._projects.append(Project(name=commandLine._arguments[0]._value))  # à modif
+        commandLine.addProject(projects=self._projects)
 
     def _addTask(self, commandLine:'CommandLine') -> None:
         project = self._findProjectByName(commandLine=commandLine)
@@ -158,6 +158,8 @@ class Argument:
                 task.set_done(done)
                 return
 
+    def addProject(self, projects:List['Project']) -> None:
+        projects.append(Project(name=self._value))
 
 class CommandLine:
 
@@ -203,6 +205,11 @@ class CommandLine:
     def setTaskDone(self, projects:List['Project'], done:bool) -> None:
         if len(self._arguments) > 0:
             self._arguments[0].setTaskDone(projects=projects, done=done)
+
+    def addProject(self, projects:List['Project']) -> None:
+        if len(self._arguments) > 0:
+            self._arguments[0].addProject(projects=projects)
+
 
 class TaskList:
     QUIT = "quit"
