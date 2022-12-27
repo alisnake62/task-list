@@ -1,82 +1,107 @@
 import subprocess
 import unittest
 from threading import Timer
+import os
+
+os.system(
+    "printf 'show\n" +
+    "add project secrets\n" +
+    "add task secrets Eat more donuts.\n" +
+    "add task secrets Destroy all humans.\n" +
+    "show\n" +
+    "add project training\n" +
+    "add task training Four Elements of Simple Design\n" +
+    "add task training SOLID\n" +
+    "add task training Coupling and Cohesion\n" +
+    "add task training Primitive Obsession\n" +
+    "add task training Outside-In TDD\n" +
+    "add task training Interaction-Driven Design\n" +
+    "check 1\n" +
+    "check 3\n" +
+    "check 5\n" +
+    "check 6\n" +
+    "show\n" +
+    "quit' | /usr/bin/python3 python/task_list/"
+)
+# p.stdin.write(("print('toto')\n").encode())
 
 
-class ApplicationTest(unittest.TestCase):
-    PROMPT = "> "
-    TIMEOUT = 2
 
-    def setUp(self):
-        self.proc = subprocess.Popen(
-            ["python", "-m", "task_list"],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            universal_newlines=True)
-        self.timer = Timer(self.TIMEOUT, self.proc.kill)
-        self.timer.start()
+# print(p.communicate())
+# class ApplicationTest(unittest.TestCase):
+#     PROMPT = "> "
+#     TIMEOUT = 2
 
-    def tearDown(self):
-        self.timer.cancel()
-        self.proc.stdout.close()
-        self.proc.stdin.close()
-        while self.proc.returncode is None:
-            self.proc.poll()
+#     def setUp(self):
+#         self.proc = subprocess.Popen(
+#             ["python", "-m", "task_list"],
+#             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+#             universal_newlines=True)
+#         self.timer = Timer(self.TIMEOUT, self.proc.kill)
+#         self.timer.start()
 
-    def test_it_works(self):
-        self.execute("show")
-        self.execute("add project secrets")
-        self.execute("add task secrets Eat more donuts.")
-        self.execute("add task secrets Destroy all humans.")
-        self.execute("show")
+#     def tearDown(self):
+#         self.timer.cancel()
+#         self.proc.stdout.close()
+#         self.proc.stdin.close()
+#         while self.proc.returncode is None:
+#             self.proc.poll()
 
-        self.read_lines(
-            "secrets",
-            "  [ ] 1: Eat more donuts.",
-            "  [ ] 2: Destroy all humans.",
-            "")
+#     def test_it_works(self):
+#         self.execute("show")
+#         self.execute("add project secrets")q
+#         self.execute("add task secrets Eat more donuts.")
+#         self.execute("add task secrets Destroy all humans.")
+#         self.execute("show")
 
-        self.execute("add project training")
-        self.execute("add task training Four Elements of Simple Design")
-        self.execute("add task training SOLID")
-        self.execute("add task training Coupling and Cohesion")
-        self.execute("add task training Primitive Obsession")
-        self.execute("add task training Outside-In TDD")
-        self.execute("add task training Interaction-Driven Design")
+#         self.read_lines(
+#             "secrets",
+#             "  [ ] 1: Eat more donuts.",
+#             "  [ ] 2: Destroy all humans.",
+#             "")
 
-        self.execute("check 1")
-        self.execute("check 3")
-        self.execute("check 5")
-        self.execute("check 6")
-        self.execute("show")
+#         self.execute("add project training")
+#         self.execute("add task training Four Elements of Simple Design")
+#         self.execute("add task training SOLID")
+#         self.execute("add task training Coupling and Cohesion")
+#         self.execute("add task training Primitive Obsession")
+#         self.execute("add task training Outside-In TDD")
+#         self.execute("add task training Interaction-Driven Design")
 
-        self.read_lines(
-            "secrets",
-            "  [x] 1: Eat more donuts.",
-            "  [ ] 2: Destroy all humans.",
-            "",
-            "training",
-            "  [x] 3: Four Elements of Simple Design",
-            "  [ ] 4: SOLID",
-            "  [x] 5: Coupling and Cohesion",
-            "  [x] 6: Primitive Obsession",
-            "  [ ] 7: Outside-In TDD",
-            "  [ ] 8: Interaction-Driven Design",
-            "")
+#         self.execute("check 1")
+#         self.execute("check 3")
+#         self.execute("check 5")
+#         self.execute("check 6")
+#         self.execute("show")
 
-        self.execute("quit")
+#         self.read_lines(
+#             "secrets",
+#             "  [x] 1: Eat more donuts.",
+#             "  [ ] 2: Destroy all humans.",
+#             "",
+#             "training",
+#             "  [x] 3: Four Elements of Simple Design",
+#             "  [ ] 4: SOLID",
+#             "  [x] 5: Coupling and Cohesion",
+#             "  [x] 6: Primitive Obsession",
+#             "  [ ] 7: Outside-In TDD",
+#             "  [ ] 8: Interaction-Driven Design",
+#             "")
 
-    def execute(self, command):
-        self.write(command + "\n")
+#         self.execute("quit")
 
-    def write(self, command):
-        self.read(self.PROMPT)
-        self.proc.stdin.write(command)
-        self.proc.stdin.flush()
+#     def execute(self, command):
+#         self.write(command + "\n")
 
-    def read(self, expected_output):
-        output = self.proc.stdout.read(len(expected_output))
-        self.assertEqual(expected_output, output)
+#     def write(self, command):
+#         self.read(self.PROMPT)
+#         self.proc.stdin.write(command)
+#         self.proc.stdin.flush()
 
-    def read_lines(self, *lines):
-        for line in lines:
-            self.read(line + "\n")
+#     def read(self, expected_output):
+#         output = self.proc.stdout.read(len(expected_output))
+#         self.assertEqual(expected_output, output)
+
+#     def read_lines(self, *lines):
+#         for line in lines:
+#             self.read(line + "\n")

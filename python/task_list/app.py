@@ -1,8 +1,67 @@
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING
 
-from task_list.console import Console
-from task_list.task import Task
+if TYPE_CHECKING: from app import TaskList
 
+from console import Console
+from task import Task
+
+class Command:
+    def __init__(self, value:str) -> None:
+        if value not in ["show", "add", "check", "uncheck", "help"]: self._value = "error"
+        self._value = value
+
+    def isShow(self):
+        return self._value == "show"
+
+    def isAdd(self):
+        return self._value == "add"
+
+    def isCheck(self):
+        return self._value == "check"
+
+    def isUncheck(self):
+        return self._value == "uncheck"
+
+    def isHelp(self):
+        return self._value == "help"
+
+    def isError(self):
+        return self._value == "error"
+
+    def error(self, taskList:'TaskList'):
+        taskList.error(self._value)
+
+class Argument:
+    def __init__(self, value:str) -> None:
+        self._value = value
+
+    def add(self, taskList:'TaskList'):
+        taskList.add(self._value)
+
+    def check(self, taskList:'TaskList'):
+        taskList.check(self._value)
+
+    def uncheck(self, taskList:'TaskList'):
+        taskList.uncheck(self._value)
+
+class CommandLine:
+
+    _command    = None
+    _argument   = None
+    def __init__(self, value:str) -> None:
+
+        command_rest = value.split(" ", 1)
+        self._command   = Command(value=command_rest[0])
+        if len(command_rest) > 1: 
+            self._argument  = Argument(value=command_rest[1])
+
+    def execute(self, taskList:'TaskList') -> None:
+        if self._command.isShow(): taskList.show()
+        if self._command.isAdd(): self._argument.add(taskList=taskList)
+        if self._command.isCheck(): self._argument.check(taskList=taskList)
+        if self._command.isUncheck(): self._argument.uncheck(taskList=taskList)
+        if self._command.isHelp(): taskList.help()
+        if self._command.isError(): self._command.error(taskList=taskList)
 
 class TaskList:
     QUIT = "quit"
@@ -20,20 +79,10 @@ class TaskList:
             self.execute(command)
 
     def execute(self, command_line: str) -> None:
-        command_rest = command_line.split(" ", 1)
-        command = command_rest[0]
-        if command == "show":
-            self.show()
-        elif command == "add":
-            self.add(command_rest[1])
-        elif command == "check":
-            self.check(command_rest[1])
-        elif command == "uncheck":
-            self.uncheck(command_rest[1])
-        elif command == "help":
-            self.help()
-        else:
-            self.error(command)
+
+        commandLine = CommandLine(value=command_line)
+        commandLine.execute(taskList=self)
+    
 
     def show(self) -> None:
         for project, tasks in self.tasks.items():
