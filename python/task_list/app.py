@@ -3,7 +3,6 @@ from typing import Dict, List, TYPE_CHECKING
 if TYPE_CHECKING: from app import TaskList
 
 from console import Console
-from task import Task
 
 class Command:
     def __init__(self, value:str) -> None:
@@ -56,20 +55,48 @@ class CommandLine:
             self._argument  = Argument(value=command_rest[1])
 
     def execute(self, taskList:'TaskList') -> None:
-        if self._command.isShow(): taskList.show()
-        if self._command.isAdd(): self._argument.add(taskList=taskList)
-        if self._command.isCheck(): self._argument.check(taskList=taskList)
+        if self._command.isShow()   : taskList.show()
+        if self._command.isAdd()    : self._argument.add(taskList=taskList)
+        if self._command.isCheck()  : self._argument.check(taskList=taskList)
         if self._command.isUncheck(): self._argument.uncheck(taskList=taskList)
-        if self._command.isHelp(): taskList.help()
-        if self._command.isError(): self._command.error(taskList=taskList)
+        if self._command.isHelp()   : taskList.help()
+        if self._command.isError()  : self._command.error(taskList=taskList)
+
+class Task:
+    def __init__(self, id_: int, description: str, done: bool) -> None:
+        self.id = id_
+        self.description = description
+        self.done = done
+
+    def set_done(self, done: bool) -> None:
+        self.done = done
+
+    def is_done(self) -> bool:
+        return self.done
+
+    def isGoodId(self, id:int) -> bool:
+        return self.id == id
+
+class Project:
+
+    def __init__(self, name:str) -> None:
+        self._name = name
+        self._tasks:List[Task] = []
+
+    def addTask(self, task:Task) -> None:
+        self._tasks.append(task)
+
+    def isGoodName(self, name:str) -> bool:
+        return self._name == name
 
 class TaskList:
     QUIT = "quit"
 
     def __init__(self, console: Console) -> None:
+
         self.console = console
         self.last_id: int = 0
-        self.tasks: Dict[str, List[Task]] = dict()
+        self.tasks: List[Project] = []
 
     def run(self) -> None:
         while True:
@@ -85,9 +112,9 @@ class TaskList:
     
 
     def show(self) -> None:
-        for project, tasks in self.tasks.items():
-            self.console.print(project)
-            for task in tasks:
+        for project in self.tasks:
+            self.console.print(project._name)
+            for task in project._tasks:
                 self.console.print(f"  [{'x' if task.is_done() else ' '}] {task.id}: {task.description}")
             self.console.print()
 
@@ -100,16 +127,23 @@ class TaskList:
             project_task = sub_command_rest[1].split(" ", 1)
             self.add_task(project_task[0], project_task[1])
 
+    def findProject(self, name:str) -> Project:
+        for project in self.tasks:
+            if project.isGoodName(name=name):
+                return project
+        return None
+
     def add_project(self, name: str) -> None:
-        self.tasks[name] = []
+        self.tasks.append(Project(name=name))
 
     def add_task(self, project: str, description: str) -> None:
-        project_tasks = self.tasks.get(project)
+        project_tasks = self.findProject(name=project)
         if project_tasks is None:
             self.console.print(f"Could not find a project with the name {project}.")
             self.console.print()
             return
-        project_tasks.append(Task(self.next_id(), description, False))
+        task = Task(self.next_id(), description, False)
+        project_tasks.addTask(task=task)
 
     def check(self, id_string: str) -> None:
         self.set_done(id_string, True)
@@ -119,9 +153,9 @@ class TaskList:
 
     def set_done(self, id_string: str, done: bool) -> None:
         id_ = int(id_string)
-        for project, tasks in self.tasks.items():
-            for task in tasks:
-                if task.id == id_:
+        for project in self.tasks:
+            for task in project._tasks:
+                if task.isGoodId(id=id_):
                     task.set_done(done)
                     return
         self.console.print(f"Could not find a task with an ID of {id_}")

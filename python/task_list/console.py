@@ -1,5 +1,13 @@
-from typing import Optional, IO
+from typing import Optional, IO, TYPE_CHECKING
 
+if TYPE_CHECKING: from console import Console
+
+# class ConsoleOutPut:
+
+#     def __init__(self, console:'Console') -> None:
+#         self._console = console
+
+    
 
 class Console:
     def __init__(self, input_reader: IO, output_writer: IO) -> None:
