@@ -1,6 +1,6 @@
 from typing import Dict, List, TYPE_CHECKING
 
-if TYPE_CHECKING: from app import TaskList
+if TYPE_CHECKING: from app import TaskList, ActionUtils
 
 from console import Console
 
@@ -67,13 +67,13 @@ class CommandLine:
             else:
                 self._arguments = [Argument(value=argStr) for argStr in command_rest[1].split(" ")]
 
-    def execute(self, taskList:'TaskList') -> None:
-        if self._command.isShow()   : taskList.show()
-        if self._command.isAdd()    : taskList.add(commandLine=self)
-        if self._command.isCheck()  : taskList.check(commandLine=self)
-        if self._command.isUncheck(): taskList.uncheck(commandLine=self)
-        if self._command.isHelp()   : taskList.help()
-        if self._command.isError()  : taskList.error(commandLine=self)
+    def execute(self, actionUtils:'ActionUtils') -> None:
+        if self._command.isShow()   : actionUtils.show()
+        if self._command.isAdd()    : actionUtils.add(commandLine=self)
+        if self._command.isCheck()  : actionUtils.check(commandLine=self)
+        if self._command.isUncheck(): actionUtils.uncheck(commandLine=self)
+        if self._command.isHelp()   : actionUtils.help()
+        if self._command.isError()  : actionUtils.error(commandLine=self)
 
     def subCommandIsProject(self):
         return self._subCommand.isProject()
@@ -108,7 +108,8 @@ class Project:
     def __str__(self) -> str:
         return self._name
 
-    def addTask(self, task:Task) -> None:
+    def addTask(self, id:int, description:str) -> None:
+        task = Task(id_=id, description=description, done=False)
         self._tasks.append(task)
 
     def isGoodName(self, name:str) -> bool:
@@ -119,13 +120,80 @@ class Project:
             if task.isGoodId(id=id): return task
         return None
 
+    def lastTaskId(self) -> int:
+        taskIds = [task.id for task in self._tasks]
+        if len(taskIds) == 0:
+            return 0
+        return max(taskIds)
+
+class ActionUtils:
+
+    def __init__(self, console:Console, projects:List[Project]) -> None:
+        self._console = console
+        self._projects = projects
+
+    def _nextTaskId(self) -> int:
+        maxTaskIds = [project.lastTaskId() for project in self._projects]
+        return max(maxTaskIds) + 1
+
+    def show(self) -> None:
+        self._console.printShow(projects=self._projects)
+
+    def add(self, commandLine: CommandLine) -> None:
+        if commandLine.subCommandIsProject():
+            self._addProject(commandLine=commandLine)
+        if commandLine.subCommandIsTask():
+            self._addTask(commandLine=commandLine)
+
+    def _findProjectByName(self, name:str) -> Project:
+        for project in self._projects:
+            if project.isGoodName(name=name):
+                return project
+        return None
+
+    def _addProject(self, commandLine: CommandLine) -> None:
+        self._projects.append(Project(name=commandLine._arguments[0]._value))
+
+    def _addTask(self, commandLine:CommandLine) -> None:
+        arguments = commandLine._arguments
+        project = arguments[0]._value
+        description = arguments[1]._value
+        project_tasks = self._findProjectByName(name=project)
+        if project_tasks is None:
+            self._console.printProjectNotFound(projectName=project)
+            return
+        taskId = self._nextTaskId()
+        project_tasks.addTask(id=taskId, description=description)
+
+    def check(self, commandLine: CommandLine) -> None:
+        id_string = commandLine._arguments[0]._value
+        self._setDone(id_string, True)
+
+    def uncheck(self, commandLine: CommandLine) -> None:
+        id_string = commandLine._arguments[0]._value
+        self._setDone(id_string, False)
+
+    def _setDone(self, id_string: str, done: bool) -> None:
+        id_ = int(id_string)
+        for project in self._projects:
+            task = project.findTaskById(id=id_)
+            if task is not None: 
+                task.set_done(done)
+                return
+        self._console.printTaskNotFound(id=id_)
+
+    def help(self) -> None:
+        self._console.printHelp()
+
+    def error(self, commandLine: CommandLine) -> None:
+        self._console.printError(command=commandLine._command._value)
+
 class TaskList:
     QUIT = "quit"
 
     def __init__(self, console: Console) -> None:
 
         self.console = console
-        self.last_id: int = 0
         self.tasks: List[Project] = []
 
     def run(self) -> None:
@@ -137,62 +205,6 @@ class TaskList:
 
     def execute(self, command_line: str) -> None:
 
+        actionUtils = ActionUtils(console=self.console, projects=self.tasks)
         commandLine = CommandLine(value=command_line)
-        commandLine.execute(taskList=self)
-
-    def show(self) -> None:
-        self.console.printShow(projects=self.tasks)
-
-    def add(self, commandLine: CommandLine) -> None:
-        if commandLine.subCommandIsProject():
-            self.add_project(commandLine)
-        if commandLine.subCommandIsTask():
-            self.add_task(commandLine)
-
-    def findProjectByName(self, name:str) -> Project:
-        for project in self.tasks:
-            if project.isGoodName(name=name):
-                return project
-        return None
-
-    def add_project(self, commandLine: CommandLine) -> None:
-        self.tasks.append(Project(name=commandLine._arguments[0]._value))
-
-    def add_task(self, commandLine:CommandLine) -> None:
-        arguments = commandLine._arguments
-        project = arguments[0]._value
-        description = arguments[1]._value
-        project_tasks = self.findProjectByName(name=project)
-        if project_tasks is None:
-            self.console.printProjectNotFound(projectName=project)
-            return
-        task = Task(self.next_id(), description, False)
-        project_tasks.addTask(task=task)
-
-    def check(self, commandLine: CommandLine) -> None:
-        id_string = commandLine._arguments[0]._value
-        self.set_done(id_string, True)
-
-    def uncheck(self, commandLine: CommandLine) -> None:
-        id_string = commandLine._arguments[0]._value
-        self.set_done(id_string, False)
-
-    def set_done(self, id_string: str, done: bool) -> None:
-        id_ = int(id_string)
-        for project in self.tasks:
-            task = project.findTaskById(id=id_)
-            if task is not None: 
-                task.set_done(done)
-                return
-        self.console.printTaskNotFound(id=id_)
-
-    def help(self) -> None:
-        self.console.printHelp()
-
-    def error(self, commandLine: CommandLine) -> None:
-        self.console.printError(command=commandLine._command._value)
-
-    def next_id(self) -> int:
-        self.last_id += 1
-        return self.last_id
-
+        commandLine.execute(actionUtils=actionUtils)

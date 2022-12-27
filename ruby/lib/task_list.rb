@@ -55,18 +55,18 @@ private
   def add(command_line)
     subcommand, rest = command_line.split(/ /, 2)
     if subcommand == 'project'
-      add_project rest
+      _addProject rest
     elsif subcommand == 'task'
       project, description = rest.split(/ /, 2)
-      add_task project, description
+      _addTask project, description
     end
   end
 
-  def add_project(name)
+  def _addProject(name)
     @tasks[name] = []
   end
 
-  def add_task(project, description)
+  def _addTask(project, description)
     project_tasks = @tasks[project]
     if project_tasks.nil?
       @output.printf("Could not find a project with the name \"%s\".\n", project)
