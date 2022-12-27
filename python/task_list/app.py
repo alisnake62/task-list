@@ -89,6 +89,11 @@ class Project:
     def isGoodName(self, name:str) -> bool:
         return self._name == name
 
+    def findTaskById(self, id:int) -> Task:
+        for task in self._tasks:
+            if task.isGoodId(id=id): return task
+        return None
+
 class TaskList:
     QUIT = "quit"
 
@@ -127,7 +132,7 @@ class TaskList:
             project_task = sub_command_rest[1].split(" ", 1)
             self.add_task(project_task[0], project_task[1])
 
-    def findProject(self, name:str) -> Project:
+    def findProjectByName(self, name:str) -> Project:
         for project in self.tasks:
             if project.isGoodName(name=name):
                 return project
@@ -137,7 +142,7 @@ class TaskList:
         self.tasks.append(Project(name=name))
 
     def add_task(self, project: str, description: str) -> None:
-        project_tasks = self.findProject(name=project)
+        project_tasks = self.findProjectByName(name=project)
         if project_tasks is None:
             self.console.print(f"Could not find a project with the name {project}.")
             self.console.print()
@@ -154,10 +159,10 @@ class TaskList:
     def set_done(self, id_string: str, done: bool) -> None:
         id_ = int(id_string)
         for project in self.tasks:
-            for task in project._tasks:
-                if task.isGoodId(id=id_):
-                    task.set_done(done)
-                    return
+            task = project.findTaskById(id=id_)
+            if task is not None: 
+                task.set_done(done)
+                return
         self.console.print(f"Could not find a task with an ID of {id_}")
         self.console.print()
 
