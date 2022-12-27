@@ -5,8 +5,10 @@ if TYPE_CHECKING: from app import TaskList
 from console import Console
 
 class Command:
+
+    _expectedValue = ["show", "add", "check", "uncheck", "help"]
+
     def __init__(self, value:str) -> None:
-        if value not in ["show", "add", "check", "uncheck", "help"]: self._value = "error"
         self._value = value
 
     def isShow(self):
@@ -25,7 +27,7 @@ class Command:
         return self._value == "help"
 
     def isError(self):
-        return self._value == "error"
+        return self._value not in self._expectedValue
 
     def error(self, taskList:'TaskList'):
         taskList.error(self._value)
@@ -114,7 +116,6 @@ class TaskList:
 
         commandLine = CommandLine(value=command_line)
         commandLine.execute(taskList=self)
-    
 
     def show(self) -> None:
         for project in self.tasks:
