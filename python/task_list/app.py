@@ -12,7 +12,7 @@ class ProjectNameType:
         self._value = projetNameStr
 
     def __str__(self) -> str:
-        return str(self._value)
+        return self._value
 
     def __eq__(self, otherProjectNameType: object) -> bool:
         return self._value == otherProjectNameType._value
@@ -45,6 +45,9 @@ class TaskDescriptionType:
     def __init__(self, taskDescriptionStr:str) -> None:
         self._value = taskDescriptionStr
 
+    def __str__(self) -> str:
+        return self._value
+
 class TaskDoneType:
 
     _value:bool
@@ -53,7 +56,7 @@ class TaskDoneType:
         self._value = taskDoneStr
 
 class Task:
-    def __init__(self, id: TaskIdType, description: str, done: bool = False) -> None:
+    def __init__(self, id: TaskIdType, description: TaskDescriptionType, done: bool = False) -> None:
         self._id = id
         self._description = description
         self._done = done
@@ -112,7 +115,7 @@ class ProjectList:
 
         console.printTaskNotFound(taskId=taskId)
 
-    def addTask(self, projectName:ProjectNameType, taskDescription:str, console:Console):
+    def addTask(self, projectName:ProjectNameType, taskDescription:TaskDescriptionType, console:Console):
 
         projectFound = False
         for project in self._projects:
@@ -145,9 +148,9 @@ class ArgumentLine:
 class ArgumentLineAdd(ArgumentLine):
 
     _projectName:ProjectNameType
-    _taskDescription:str = None
+    _taskDescription:TaskDescriptionType = None
 
-    def __init__(self, projectName:ProjectNameType, taskDescription:str=None) -> None:
+    def __init__(self, projectName:ProjectNameType, taskDescription:TaskDescriptionType=None) -> None:
         self._projectName = projectName
         self._taskDescription = taskDescription
 
@@ -201,7 +204,7 @@ class SubCommand:
         if self._type.isTask():
             argumentLineSplited = argumentLineStr.split(" ")
             projectName = ProjectNameType(projetNameStr=argumentLineSplited[0])
-            taskDescription = argumentLineSplited[1]
+            taskDescription = TaskDescriptionType(taskDescriptionStr=argumentLineSplited[1])
             return ArgumentLineAdd(projectName=projectName, taskDescription=taskDescription)
 
     def executeAdd(self, argumentLine:ArgumentLineAdd, projects:ProjectList, console:Console) -> None:
