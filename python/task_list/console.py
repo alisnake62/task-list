@@ -25,8 +25,8 @@ class Console:
         self.print(f"Could not find a project with the name {projectName}.")
         self.print()
 
-    def printTaskNotFound(self, id: int) -> None:
-        self.print(f"Could not find a task with an ID of {id}")
+    def printTaskNotFound(self, taskId: int) -> None:
+        self.print(f"Could not find a task with an ID of {taskId}")
         self.print()
 
     def printHelp(self) -> None:
