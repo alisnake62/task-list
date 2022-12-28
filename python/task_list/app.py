@@ -52,23 +52,23 @@ class TaskDoneType:
 
     _value:bool
 
-    def __init__(self, taskDoneStr:bool) -> None:
-        self._value = taskDoneStr
+    def __init__(self, taskDoneBooleanValue:bool) -> None:
+        self._value = taskDoneBooleanValue
+
+    def is_done(self) -> bool:
+        return self._value
 
 class Task:
-    def __init__(self, id: TaskIdType, description: TaskDescriptionType, done: bool = False) -> None:
+    def __init__(self, id: TaskIdType, description: TaskDescriptionType, done:TaskDoneType=TaskDoneType(taskDoneBooleanValue=False)) -> None:
         self._id = id
         self._description = description
         self._done = done
 
     def __str__(self) -> str:
-        return f"  [{'x' if self.is_done() else ' '}] {self._id}: {self._description}"
+        return f"  [{'x' if self._done.is_done() else ' '}] {self._id}: {self._description}"  # à modif
 
-    def set_done(self, done: bool) -> None:
+    def set_done(self, done: TaskDoneType) -> None:
         self._done = done
-
-    def is_done(self) -> bool:
-        return self._done
 
     def isThisId(self, id:TaskIdType) -> bool:
         return self._id == id
@@ -135,12 +135,12 @@ class ProjectList:
     def checkTask(self, taskId:TaskIdType, console:Console) -> None:
         task = self._findTaskById(taskId=taskId, console=console)
         if task is not None:
-            task.set_done(done=True)
+            task.set_done(done=TaskDoneType(taskDoneBooleanValue=True))
 
     def uncheckTask(self, taskId:TaskIdType, console:Console) -> None:
         task = self._findTaskById(taskId=taskId, console=console)
         if task is not None:
-            task.set_done(done=False)
+            task.set_done(done=TaskDoneType(taskDoneBooleanValue=False))
 
 class ArgumentLine:
     pass
