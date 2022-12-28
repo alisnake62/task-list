@@ -1,7 +1,6 @@
 import sys
 
-from console import Console
-from app import ProgramLoop
+from app import ProgramLoop, Console
 
 
 def main():

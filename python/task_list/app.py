@@ -1,8 +1,40 @@
-from typing import List
-
-from console import Console
+from typing import List, IO
 
 from copy import deepcopy
+
+# TODO: bannir les __str__, c'est à considérer comme un Getter
+
+class ConsoleOuput:
+
+    _outputStr:str
+
+    def __init__(self, outputStr:str = None) -> None:
+
+        self._outputStr = outputStr
+        if self._outputStr is None:
+            self._outputStr = "\n".join([
+                "Commands:",
+                "  show",
+                "  add project <project name>",
+                "  add task <project name> <task description>",
+                "  check <task ID>",
+                "  uncheck <task ID>"
+            ])
+
+# tout les type à revoir
+class Console:
+    def __init__(self, input_reader: IO, output_writer: IO) -> None:
+        self.input_reader = input_reader
+        self.output_writer = output_writer
+
+    def print(self, output:ConsoleOuput, end: str="\n") -> None:
+        self.output_writer.write(output._outputStr + end)
+        self.output_writer.flush()
+
+    def input(self, prompt:str="") -> str:
+        promptOutput = ConsoleOuput(outputStr=prompt)
+        self.print(promptOutput, end="")
+        return self.input_reader.readline().strip()
 
 class ProjectName:
 
@@ -187,15 +219,19 @@ class ProgramDatas:
     def _findTaskById(self, taskId:TaskId, console:Console) -> Task:
         taskFounded = self._projectList.findTaskById(taskId=taskId)
         if taskFounded is None:
-            console.printTaskNotFound(taskId=taskId)
+            outputStr = f"Could not find a task with an ID of {taskId}"
+            output = ConsoleOuput(outputStr=outputStr)
+            console.print(output)
         return taskFounded
 
     def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:Console):
 
         projectFound = self._projectList.findProjectByName(projectName=projectName)
-
         if projectFound is None:
-            console.printProjectNotFound(projectName=projectName)
+
+            outputStr = f"Could not find a project with the name {projectName}."
+            output = ConsoleOuput(outputStr=outputStr)
+            console.print(output)
             return None
 
         taskId = self._lastTaskId.nextOne()
@@ -303,7 +339,7 @@ class CommandRest:
         self._argumentLine.setDone(programDatas=programDatas, taskDone=taskDone, console=console)
 
 class CommandType:
-    
+
     _expectedValue:List[str] = ["show", "add", "check", "uncheck", "help", "quit"]
     _value:str
 
@@ -332,7 +368,9 @@ class CommandType:
         return self._value not in self._expectedValue
 
     def printError(self, console:Console):
-        console.printError(command=self._value)
+        outputStr = f"I don't know what the command {self._value} is."
+        output = ConsoleOuput(outputStr=outputStr)
+        console.print(output)
 
 class Command:
 
@@ -359,7 +397,8 @@ class Command:
     def execute(self, commandRest:CommandRest, programDatas:ProgramDatas, console:Console) -> None:
 
         if self._type.isShow():
-            console.printShow(programDatas=programDatas)
+            output = ConsoleOuput(outputStr=str(programDatas))
+            console.print(output=output)
             return
 
         if self._type.isAdd():
@@ -377,7 +416,8 @@ class Command:
             return
 
         if self._type.isHelp():
-            console.printHelp()
+            output = ConsoleOuput()
+            console.print(output=output)
             return
 
         if self._type.isError():
