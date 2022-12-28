@@ -98,6 +98,14 @@ class TaskList:
     def __init__(self) -> None:
         self._tasks = []
 
+    def __str__(self) -> str:
+        toString = ""
+        for task in self._tasks:
+            toString += f"{task}\n"
+        toString += "\n"
+
+        return toString
+
     def addTask(self, task:Task) -> None:
         self._tasks.append(task)
 
@@ -117,7 +125,9 @@ class Project:
         self._taskList = TaskList()
 
     def __str__(self) -> str:
-        return str(self._name)
+        toString = f"{self._name}\n"
+        toString += f"{self._taskList}"
+        return toString
 
     def addTask(self, task:Task) -> None:
         self._taskList.addTask(task=task)
@@ -135,16 +145,11 @@ class ProjectList:
     def __init__(self) -> None:
         self._projects = []
 
-    # 2 indentation, à revoir
-    # + à revoir complètement car on appelle un argument interdit
     def __str__(self) -> str:
-        strValue = ""
+        toString = ""
         for project in self._projects:
-            strValue += f"{project}\n"
-            for task in project._taskList._tasks:
-                strValue += f"{task}\n"
-            strValue += "\n"
-        return strValue
+            toString += f"{project}"
+        return toString
 
     # 2 indentation, à revoir
     def findTaskById(self, taskId:TaskId) -> Task:
