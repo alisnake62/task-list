@@ -15,11 +15,8 @@ class Console:
             self.output_writer.flush()
 
     def printShow(self, projects:List['Project']) -> None:
-        for project in projects:
-            self.print(str(project))
-            for task in project._tasks:
-                self.print(str(task))
-            self.print()
+        self.print(str(projects))
+        self.print()
 
     def printProjectNotFound(self, projectName: str) -> None:
         self.print(f"Could not find a project with the name {projectName}.")
