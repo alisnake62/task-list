@@ -91,20 +91,15 @@ class Task:
     def isThisId(self, id:TaskId) -> bool:
         return self._identity.isThisId(id=id)
 
-class Project:
+class TaskList:
 
-    def __init__(self, name:ProjectName) -> None:
-        self._name = name
-        self._tasks:List[Task] = []
+    _tasks:List[Task]
 
-    def __str__(self) -> str:
-        return str(self._name)
+    def __init__(self) -> None:
+        self._tasks = []
 
     def addTask(self, task:Task) -> None:
         self._tasks.append(task)
-
-    def isThisName(self, name:ProjectName) -> bool:
-        return self._name == name
 
     # plus de 2 indentation
     def findTaskById(self, id:TaskId) -> Task:
@@ -112,16 +107,38 @@ class Project:
             if task.isThisId(id=id): return task
         return None
 
+class Project:
+
+    _name:ProjectName
+    _taskList:TaskList
+
+    def __init__(self, name:ProjectName) -> None:
+        self._name = name
+        self._taskList = TaskList()
+
+    def __str__(self) -> str:
+        return str(self._name)
+
+    def addTask(self, task:Task) -> None:
+        self._taskList.addTask(task=task)
+
+    def isThisName(self, name:ProjectName) -> bool:
+        return self._name == name
+
+    def findTaskById(self, id:TaskId) -> Task:
+        return self._taskList.findTaskById(id=id)
+
 class ProjectList:
 
     _projects:List[Project] = []
 
     # 2 indentation, à revoir
+    # + à revoir complètement car on appelle un argument interdit
     def __str__(self) -> str:
         strValue = ""
         for project in self._projects:
             strValue += f"{project}\n"
-            for task in project._tasks:
+            for task in project._taskList._tasks:
                 strValue += f"{task}\n"
             strValue += "\n"
         return strValue
@@ -175,7 +192,7 @@ class ProgramDatas:
         self._lastTaskId = taskId
 
     def addProject(self, project:Project) -> None:
-        self._projectList.addProject(project)
+        self._projectList.addProject(project=project)
 
     def checkTask(self, taskId:TaskId, console:Console) -> None:
         task = self._findTaskById(taskId=taskId, console=console)
@@ -377,7 +394,7 @@ class CommandLine:
 class ProgramLoop:
     QUIT = "quit"
     _console:Console
-    _programDatass:ProgramDatas
+    _programDatas:ProgramDatas
 
     def __init__(self, console: Console) -> None:
 
@@ -395,3 +412,4 @@ class ProgramLoop:
     def execute(self, command_line: str) -> None:
         commandLine = CommandLine(commandLineStr=command_line)
         commandLine.execute(programDatas=self._programDatas, console=self._console)
+        test = "toto"
