@@ -1,4 +1,6 @@
-from typing import List, IO
+from typing import List, IO, TYPE_CHECKING
+
+if TYPE_CHECKING: from app import Console
 
 from copy import deepcopy
 
@@ -21,20 +23,11 @@ class ConsoleOuput:
                 "  uncheck <task ID>"
             ])
 
-# tout les type à revoir
-class Console:
-    def __init__(self, input_reader: IO, output_writer: IO) -> None:
-        self.input_reader = input_reader
-        self.output_writer = output_writer
+    def __str__(self) -> str:
+        return self._outputStr
 
-    def print(self, output:ConsoleOuput, end: str="\n") -> None:
-        self.output_writer.write(output._outputStr + end)
-        self.output_writer.flush()
-
-    def input(self, prompt:str="") -> str:
-        promptOutput = ConsoleOuput(outputStr=prompt)
-        self.print(promptOutput, end="")
-        return self.input_reader.readline().strip()
+    def addNewLine(self):
+        self._outputStr += "\n"
 
 class ProjectName:
 
@@ -216,7 +209,7 @@ class ProgramDatas:
     def __str__(self) -> str:
         return str(self._projectList)
 
-    def _findTaskById(self, taskId:TaskId, console:Console) -> Task:
+    def _findTaskById(self, taskId:TaskId, console:'Console') -> Task:
         taskFounded = self._projectList.findTaskById(taskId=taskId)
         if taskFounded is None:
             outputStr = f"Could not find a task with an ID of {taskId}"
@@ -224,7 +217,7 @@ class ProgramDatas:
             console.print(output)
         return taskFounded
 
-    def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:Console):
+    def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:'Console'):
 
         projectFound = self._projectList.findProjectByName(projectName=projectName)
         if projectFound is None:
@@ -242,7 +235,7 @@ class ProgramDatas:
     def addProject(self, project:Project) -> None:
         self._projectList.addProject(project=project)
 
-    def setDone(self, taskId:TaskId, taskDone:TaskDone, console:Console) -> None:
+    def setDone(self, taskId:TaskId, taskDone:TaskDone, console:'Console') -> None:
         task = self._findTaskById(taskId=taskId, console=console)
         if task is not None:
             task.set_done(done=taskDone)
@@ -262,7 +255,7 @@ class ArgumentLineAdd(ArgumentLine):
     def addProject(self, programDatas:ProgramDatas) -> None:
         programDatas.addProject(Project(name=self._projectName))
 
-    def addTask(self, programDatas:ProgramDatas, console:Console) -> None:
+    def addTask(self, programDatas:ProgramDatas, console:'Console') -> None:
         programDatas.addTask(projectName=self._projectName, taskDescription=self._taskDescription, console=console)
 
 class ArgumentLineSetDone(ArgumentLine):
@@ -272,7 +265,7 @@ class ArgumentLineSetDone(ArgumentLine):
     def __init__(self, taskId:TaskId) -> None:
         self._taskId = taskId
 
-    def setDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:Console) -> None:
+    def setDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:'Console') -> None:
         programDatas.setDone(taskId=self._taskId, taskDone=taskDone, console=console)
 
 class SubCommandType:
@@ -310,7 +303,7 @@ class SubCommand:
             taskDescription = TaskDescription(taskDescriptionStr=argumentLineSplited[1])
             return ArgumentLineAdd(projectName=projectName, taskDescription=taskDescription)
 
-    def executeAdd(self, argumentLine:ArgumentLineAdd, programDatas:ProgramDatas, console:Console) -> None:
+    def executeAdd(self, argumentLine:ArgumentLineAdd, programDatas:ProgramDatas, console:'Console') -> None:
         if self._type.isProject():
             argumentLine.addProject(programDatas=programDatas)
 
@@ -332,10 +325,10 @@ class CommandRest:
             self._argumentLine = ArgumentLineSetDone(taskId=taskId)
             return
 
-    def executeAdd(self, programDatas:ProgramDatas, console:Console) -> None:
+    def executeAdd(self, programDatas:ProgramDatas, console:'Console') -> None:
         self._subCommand.executeAdd(argumentLine=self._argumentLine, programDatas=programDatas, console=console)
 
-    def executeSetDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:Console) -> None:
+    def executeSetDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:'Console') -> None:
         self._argumentLine.setDone(programDatas=programDatas, taskDone=taskDone, console=console)
 
 class CommandType:
@@ -367,7 +360,7 @@ class CommandType:
     def isError(self):
         return self._value not in self._expectedValue
 
-    def printError(self, console:Console):
+    def printError(self, console:'Console'):
         outputStr = f"I don't know what the command {self._value} is."
         output = ConsoleOuput(outputStr=outputStr)
         console.print(output)
@@ -394,7 +387,7 @@ class Command:
     def isQuit(self) -> bool:
         return self._type.isQuit()
 
-    def execute(self, commandRest:CommandRest, programDatas:ProgramDatas, console:Console) -> None:
+    def execute(self, commandRest:CommandRest, programDatas:ProgramDatas, console:'Console') -> None:
 
         if self._type.isShow():
             output = ConsoleOuput(outputStr=str(programDatas))
@@ -438,11 +431,34 @@ class CommandLine:
         if len(commandLineSplited) > 1:
             self._commandRest = self._command.createCommandRest(commandRestStr=commandLineSplited[1])
 
-    def execute(self, programDatas:ProgramDatas, console:Console) -> None:
+    def execute(self, programDatas:ProgramDatas, console:'Console') -> None:
         self._command.execute(commandRest=self._commandRest, programDatas=programDatas, console=console)
 
     def isQuit(self) -> bool:
         return self._command.isQuit()
+
+class Console:
+    def __init__(self, input_reader: IO, output_writer: IO) -> None:
+        self.input_reader = input_reader
+        self.output_writer = output_writer
+
+    def _write(self, output:ConsoleOuput):
+
+        self.output_writer.write(f"{output}")
+        self.output_writer.flush()
+
+    def _printPrompt(self) -> None:
+        promptOutput = ConsoleOuput(outputStr="> ")
+        self._write(output=promptOutput)
+
+    def print(self, output:ConsoleOuput) -> None:
+        output.addNewLine()
+        self._write(output=output)
+
+    def inputPrompt(self) -> str:
+        self._printPrompt()
+        commandLineStr = self.input_reader.readline().strip()  # plus de 1 points, à revoir
+        return CommandLine(commandLineStr=commandLineStr) 
 
 class ProgramLoop:
 
@@ -457,9 +473,8 @@ class ProgramLoop:
     def run(self) -> None:
         # 2 identation, à modif
         while True:
-            commandLineStr = self._console.input("> ")
 
-            commandLine = CommandLine(commandLineStr=commandLineStr)
+            commandLine = self._console.inputPrompt()
             if commandLine.isQuit():
                 break
 
