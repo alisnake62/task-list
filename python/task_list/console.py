@@ -4,6 +4,8 @@ if TYPE_CHECKING:
     from console import Console
     from app import Project
 
+# faire un type ConsoleOutput pour englober le string
+
 class Console:
     def __init__(self, input_reader: IO, output_writer: IO) -> None:
         self.input_reader = input_reader
