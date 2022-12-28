@@ -106,6 +106,7 @@ class Project:
     def isThisName(self, name:ProjectName) -> bool:
         return self._name == name
 
+    # plus de 2 indentation
     def findTaskById(self, id:TaskId) -> Task:
         for task in self._tasks:
             if task.isThisId(id=id): return task
@@ -350,7 +351,7 @@ class CommandLine:
     def execute(self, projects:ProjectList, console:Console) -> None:
         self._command.execute(commandRest=self._commandRest, projects=projects, console=console)
 
-class TaskList:
+class ProgramLoop:
     QUIT = "quit"
     _console:Console
     _projects:ProjectList
