@@ -221,6 +221,7 @@ class Command:
 
         if self._isShow():
             console.printShow(projects=projects)
+            return
 
         if self._isAdd():
             commandRest.executeAdd(projects=projects)
@@ -232,6 +233,14 @@ class Command:
 
         if self._isUncheck():
             commandRest.executeUncheck(projects=projects)
+            return
+
+        if self._isHelp():
+            console.printHelp()
+            return
+
+        if self._isError():
+            console.printError(command=self._value)
             return
 
     def _isShow(self):
