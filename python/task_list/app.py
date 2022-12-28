@@ -103,35 +103,45 @@ class ArgumentLineSetDone(ArgumentLine):
         if task is not None:
             task.set_done(done=False)
 
-class SubCommand:
+class SubCommandType:
 
     _expectedValue = ["project", "task"]
 
-    def __init__(self, value:str) -> None:
-        self._value = value
+    def __init__(self, subCommandStr:str) -> None:
+        self._value = subCommandStr
+
+    def isProject(self):
+        return self._value == "project"
+
+    def isTask(self):
+        return self._value == "task"
+
+    def isError(self):
+        return self._value not in self._expectedValue
+
+class SubCommand:
+
+    _type:SubCommandType
+
+    def __init__(self, type:SubCommandType) -> None:
+        self._type = type
 
     def createArgumentLineAdd(self, argumentLineStr:str) -> ArgumentLineAdd:
-        if self._isProject():
+        if self._type.isProject():
             return ArgumentLineAdd(projectName=argumentLineStr)
 
-        if self._isTask():
+        if self._type.isTask():
             argumentLineSplited = argumentLineStr.split(" ")
             projectName = argumentLineSplited[0]
             taskDescription = argumentLineSplited[1]
             return ArgumentLineAdd(projectName=projectName, taskDescription=taskDescription)
 
     def executeAdd(self, argumentLine:ArgumentLineAdd, projects:List[Project], console:Console) -> None:
-        if self._isProject():
+        if self._type.isProject():
             argumentLine.addProject(projects=projects)
 
-        if self._isTask():
+        if self._type.isTask():
             argumentLine.addTask(projects=projects, console=console)
-
-    def _isProject(self):
-        return self._value == "project"
-
-    def _isTask(self):
-        return self._value == "task"
 
 class CommandRest:
 
@@ -140,7 +150,7 @@ class CommandRest:
 
     def __init__(self, subCommandStr:str=None, argumentLineStr:str=None, taskIdStr:str=None) -> None:
         if subCommandStr is not None:
-            self._subCommand = SubCommand(value=subCommandStr)
+            self._subCommand = SubCommand(type=SubCommandType(subCommandStr=subCommandStr))
             self._argumentLine = self._subCommand.createArgumentLineAdd(argumentLineStr=argumentLineStr)
             return
 
@@ -157,66 +167,76 @@ class CommandRest:
     def executeUncheck(self, projects:List[Project], console:Console) -> None:
         self._argumentLine.uncheckTask(projects=projects, console=console)
 
+class CommandType:
+    
+    _expectedValue:List[str] = ["show", "add", "check", "uncheck", "help"]
+
+    def __init__(self, commandStr:str) -> None:
+        self._value = commandStr
+
+    def isShow(self):
+        return self._value == "show"
+
+    def isAdd(self):
+        return self._value == "add"
+
+    def isCheck(self):
+        return self._value == "check"
+
+    def isUncheck(self):
+        return self._value == "uncheck"
+
+    def isHelp(self):
+        return self._value == "help"
+
+    def isError(self):
+        return self._value not in self._expectedValue
+
+    def printError(self, console:Console):
+        console.printError(command=self._value)
+
 class Command:
 
-    _expectedValue = ["show", "add", "check", "uncheck", "help"]
+    _type:CommandType
 
-    def __init__(self, value:str) -> None:
-        self._value = value
+    def __init__(self, type:CommandType) -> None:
+        self._type = type
 
     def createCommandRest(self, commandRestStr:str) -> CommandRest:
-        if self._isAdd():
+        if self._type.isAdd():
             commandRestStrSplited = commandRestStr.split(" ", 1)
             subCommandStr   = commandRestStrSplited[0]
             argumentLineStr    = commandRestStrSplited[1]
             return CommandRest(subCommandStr=subCommandStr, argumentLineStr=argumentLineStr)
 
-        if self._isCheck() or self._isUncheck():
+        if self._type.isCheck() or self._type.isUncheck():
             return CommandRest(taskIdStr=commandRestStr)
 
     def execute(self, commandRest:CommandRest, projects:List[Project], console:Console) -> None:
 
-        if self._isShow():
+        if self._type.isShow():
             console.printShow(projects=projects)
             return
 
-        if self._isAdd():
+        if self._type.isAdd():
             commandRest.executeAdd(projects=projects, console=console)
             return
 
-        if self._isCheck():
+        if self._type.isCheck():
             commandRest.executeCheck(projects=projects, console=console)
             return
 
-        if self._isUncheck():
+        if self._type.isUncheck():
             commandRest.executeUncheck(projects=projects, console=console)
             return
 
-        if self._isHelp():
+        if self._type.isHelp():
             console.printHelp()
             return
 
-        if self._isError():
-            console.printError(command=self._value)
+        if self._type.isError():
+            self._type.printError(console=console)
             return
-
-    def _isShow(self):
-        return self._value == "show"
-
-    def _isAdd(self):
-        return self._value == "add"
-
-    def _isCheck(self):
-        return self._value == "check"
-
-    def _isUncheck(self):
-        return self._value == "uncheck"
-
-    def _isHelp(self):
-        return self._value == "help"
-
-    def _isError(self):
-        return self._value not in self._expectedValue
 
 class CommandLine:
 
@@ -226,7 +246,8 @@ class CommandLine:
     def __init__(self, value:str) -> None:
 
         commandLineSplited = value.split(" ", 1)
-        self._command = Command(value=commandLineSplited[0])
+        commandStr = commandLineSplited[0]
+        self._command = Command(type=CommandType(commandStr=commandStr))
 
         if len(commandLineSplited) > 1:
             self._commandRest = self._command.createCommandRest(commandRestStr=commandLineSplited[1])
@@ -250,7 +271,5 @@ class TaskList:
             self.execute(command)
 
     def execute(self, command_line: str) -> None:
-
         commandLine = CommandLine(value=command_line)
         commandLine.execute(projects=self._projects, console=self._console)
-        test = "toto"
