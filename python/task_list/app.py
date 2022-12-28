@@ -224,14 +224,13 @@ class CommandRest:
     _subCommand:SubCommand = None
     _argumentLine:ArgumentLine
 
-    def __init__(self, subCommandStr:str=None, argumentLineStr:str=None, taskIdStr:str=None) -> None:
-        if subCommandStr is not None:
-            self._subCommand = SubCommand(type=SubCommandType(subCommandStr=subCommandStr))
+    def __init__(self, subCommand:SubCommand=None, argumentLineStr:str=None, taskId:TaskId=None) -> None:
+        if subCommand is not None:
+            self._subCommand = subCommand
             self._argumentLine = self._subCommand.createArgumentLineAdd(argumentLineStr=argumentLineStr)
             return
 
-        if taskIdStr is not None:
-            taskId = TaskId(taskIdInt=int(taskIdStr))
+        if taskId is not None:
             self._argumentLine = ArgumentLineSetDone(taskId=taskId)
             return
 
@@ -284,10 +283,12 @@ class Command:
             commandRestStrSplited = commandRestStr.split(" ", 1)
             subCommandStr   = commandRestStrSplited[0]
             argumentLineStr    = commandRestStrSplited[1]
-            return CommandRest(subCommandStr=subCommandStr, argumentLineStr=argumentLineStr)
+            subCommand = SubCommand(type=SubCommandType(subCommandStr=subCommandStr))
+            return CommandRest(subCommand=subCommand, argumentLineStr=argumentLineStr)
 
         if self._type.isCheck() or self._type.isUncheck():
-            return CommandRest(taskIdStr=commandRestStr)
+            taskId = TaskId(taskIdInt=int(commandRestStr))
+            return CommandRest(taskId=taskId)
 
     def execute(self, commandRest:CommandRest, projects:ProjectList, console:Console) -> None:
 
@@ -320,9 +321,9 @@ class CommandLine:
     _command:Command
     _commandRest:CommandRest = None
 
-    def __init__(self, value:str) -> None:
+    def __init__(self, commandLineStr:str) -> None:
 
-        commandLineSplited = value.split(" ", 1)
+        commandLineSplited = commandLineStr.split(" ", 1)
         commandStr = commandLineSplited[0]
         self._command = Command(type=CommandType(commandStr=commandStr))
 
@@ -350,5 +351,5 @@ class TaskList:
             self.execute(command)
 
     def execute(self, command_line: str) -> None:
-        commandLine = CommandLine(value=command_line)
+        commandLine = CommandLine(commandLineStr=command_line)
         commandLine.execute(projects=self._projects, console=self._console)
