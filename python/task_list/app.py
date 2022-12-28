@@ -21,7 +21,7 @@ class TaskId:
 
     _value:int
 
-    def __init__(self, taskIdInt:int) -> None:
+    def __init__(self, taskIdInt:int=0) -> None:
         self._value = taskIdInt
 
     def __str__(self) -> str:
@@ -130,7 +130,10 @@ class Project:
 
 class ProjectList:
 
-    _projects:List[Project] = []
+    _projects:List[Project]
+
+    def __init__(self) -> None:
+        self._projects = []
 
     # 2 indentation, à revoir
     # + à revoir complètement car on appelle un argument interdit
@@ -166,8 +169,12 @@ class ProjectList:
 
 class ProgramDatas:
 
-    _projectList:ProjectList = ProjectList()
-    _lastTaskId:TaskId = TaskId(taskIdInt=0)
+    _projectList:ProjectList
+    _lastTaskId:TaskId
+
+    def __init__(self) -> None:
+        self._projectList = ProjectList()
+        self._lastTaskId = TaskId()
 
     def __str__(self) -> str:
         return str(self._projectList)
@@ -238,6 +245,7 @@ class ArgumentLineSetDone(ArgumentLine):
 class SubCommandType:
 
     _expectedValue = ["project", "task"]
+    _value: str
 
     def __init__(self, subCommandStr:str) -> None:
         self._value = subCommandStr
@@ -278,7 +286,7 @@ class SubCommand:
 
 class CommandRest:
 
-    _subCommand:SubCommand = None
+    _subCommand:SubCommand
     _argumentLine:ArgumentLine
 
     def __init__(self, subCommand:SubCommand=None, argumentLineStr:str=None, taskId:TaskId=None) -> None:
@@ -303,6 +311,7 @@ class CommandRest:
 class CommandType:
     
     _expectedValue:List[str] = ["show", "add", "check", "uncheck", "help"]
+    _value:str
 
     def __init__(self, commandStr:str) -> None:
         self._value = commandStr
@@ -412,4 +421,3 @@ class ProgramLoop:
     def execute(self, command_line: str) -> None:
         commandLine = CommandLine(commandLineStr=command_line)
         commandLine.execute(programDatas=self._programDatas, console=self._console)
-        test = "toto"
