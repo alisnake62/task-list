@@ -112,10 +112,9 @@ class Project:
             if task.isThisId(id=id): return task
         return None
 
-class ProgramDatas:
+class ProjectList:
 
     _projects:List[Project] = []
-    _lastTaskId:TaskId = TaskId(taskIdInt=0)
 
     # 2 indentation, à revoir
     def __str__(self) -> str:
@@ -128,32 +127,55 @@ class ProgramDatas:
         return strValue
 
     # 2 indentation, à revoir
-    def _findTaskById(self, taskId:TaskId, console:Console) -> Task:
+    def findTaskById(self, taskId:TaskId) -> Task:
         for project in self._projects:
             findedTask = project.findTaskById(id=taskId)
             if findedTask is not None:
                 return findedTask
 
-        console.printTaskNotFound(taskId=taskId)
+        return None
 
     # 2 indentation, à revoir
-    def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:Console):
-
-        projectFound = False
+    def findProjectByName(self, projectName:ProjectName) -> Project:
         for project in self._projects:
             if project.isThisName(name=projectName):
-                projectFound = True
-                taskId = self._lastTaskId.nextOne()
-                taskIdentity = TaskIdentity(id=taskId, description=taskDescription)
-                project.addTask(Task(identity=taskIdentity))
-                self._lastTaskId = taskId
-                break
+                return project
 
-        if not projectFound:
-            console.printProjectNotFound(projectName=projectName)
+        return None
 
     def addProject(self, project:Project) -> None:
         self._projects.append(project)
+
+
+class ProgramDatas:
+
+    _projectList:ProjectList = ProjectList()
+    _lastTaskId:TaskId = TaskId(taskIdInt=0)
+
+    def __str__(self) -> str:
+        return str(self._projectList)
+
+    def _findTaskById(self, taskId:TaskId, console:Console) -> Task:
+        taskFounded = self._projectList.findTaskById(taskId=taskId)
+        if taskFounded is None:
+            console.printTaskNotFound(taskId=taskId)
+        return taskFounded
+
+    def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:Console):
+
+        projectFound = self._projectList.findProjectByName(projectName=projectName)
+
+        if projectFound is None:
+            console.printProjectNotFound(projectName=projectName)
+            return None
+
+        taskId = self._lastTaskId.nextOne()
+        taskIdentity = TaskIdentity(id=taskId, description=taskDescription)
+        projectFound.addTask(Task(identity=taskIdentity))
+        self._lastTaskId = taskId
+
+    def addProject(self, project:Project) -> None:
+        self._projectList.addProject(project)
 
     def checkTask(self, taskId:TaskId, console:Console) -> None:
         task = self._findTaskById(taskId=taskId, console=console)
