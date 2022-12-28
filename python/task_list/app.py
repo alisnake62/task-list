@@ -43,7 +43,7 @@ class Project:
         return None
 
     def lastTaskId(self) -> int:
-        taskIds = [task.id for task in self._tasks]
+        taskIds = [task._id for task in self._tasks]   # à modif
         if len(taskIds) == 0:
             return 0
         return max(taskIds)
@@ -217,7 +217,11 @@ class Command:
         if self._isCheck() or self._isUncheck():
             return CommandRest(taskIdStr=commandRestStr)
 
-    def execute(self, commandRest:CommandRest, projects:List[Project]) -> None:
+    def execute(self, commandRest:CommandRest, projects:List[Project], console:Console) -> None:
+
+        if self._isShow():
+            console.printShow(projects=projects)
+
         if self._isAdd():
             commandRest.executeAdd(projects=projects)
             return
@@ -264,20 +268,20 @@ class CommandLine:
         if len(commandLineSplited) > 1:
             self._commandRest = self._command.createCommandRest(commandRestStr=commandLineSplited[1])
 
-    def execute(self, projects:List[Project]) -> None:
-        self._command.execute(commandRest=self._commandRest, projects=projects)
+    def execute(self, projects:List[Project], console:Console) -> None:
+        self._command.execute(commandRest=self._commandRest, projects=projects, console=console)
 
 class TaskList:
     QUIT = "quit"
 
     def __init__(self, console: Console) -> None:
 
-        self.console = console
+        self._console = console
         self._projects: List[Project] = []
 
     def run(self) -> None:
         while True:
-            command = self.console.input("> ")
+            command = self._console.input("> ")
             if command == self.QUIT:
                 break
             self.execute(command)
@@ -285,5 +289,5 @@ class TaskList:
     def execute(self, command_line: str) -> None:
 
         commandLine = CommandLine(value=command_line)
-        commandLine.execute(projects=self._projects)
+        commandLine.execute(projects=self._projects, console=self._console)
         test = "toto"
