@@ -2,7 +2,7 @@ from typing import Optional, IO, TYPE_CHECKING, List
 
 if TYPE_CHECKING: 
     from console import Console
-    from app import Project
+    from app import ProgramDatas
 
 # faire un type ConsoleOutput pour englober le string
 
@@ -16,8 +16,8 @@ class Console:
         if flush:
             self.output_writer.flush()
 
-    def printShow(self, projects:List['Project']) -> None:
-        self.print(str(projects))
+    def printShow(self, programDatas:'ProgramDatas') -> None:
+        self.print(str(programDatas))
         self.print()
 
     def printProjectNotFound(self, projectName: str) -> None:

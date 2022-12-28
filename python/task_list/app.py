@@ -112,7 +112,7 @@ class Project:
             if task.isThisId(id=id): return task
         return None
 
-class ProjectList:
+class ProgramDatas:
 
     _projects:List[Project] = []
     _lastTaskId:TaskId = TaskId(taskIdInt=0)
@@ -177,11 +177,11 @@ class ArgumentLineAdd(ArgumentLine):
         self._projectName = projectName
         self._taskDescription = taskDescription
 
-    def addProject(self, projects:ProjectList) -> None:
-        projects.addProject(Project(name=self._projectName))
+    def addProject(self, programDatas:ProgramDatas) -> None:
+        programDatas.addProject(Project(name=self._projectName))
 
-    def addTask(self, projects:ProjectList, console:Console) -> None:
-        projects.addTask(projectName=self._projectName, taskDescription=self._taskDescription, console=console)
+    def addTask(self, programDatas:ProgramDatas, console:Console) -> None:
+        programDatas.addTask(projectName=self._projectName, taskDescription=self._taskDescription, console=console)
 
 class ArgumentLineSetDone(ArgumentLine):
 
@@ -190,11 +190,11 @@ class ArgumentLineSetDone(ArgumentLine):
     def __init__(self, taskId:TaskId) -> None:
         self._taskId = taskId
 
-    def checkTask(self, projects:ProjectList, console:Console) -> None:
-        projects.checkTask(taskId=self._taskId, console=console)
+    def checkTask(self, programDatas:ProgramDatas, console:Console) -> None:
+        programDatas.checkTask(taskId=self._taskId, console=console)
 
-    def uncheckTask(self, projects:ProjectList, console:Console) -> None:
-        projects.uncheckTask(taskId=self._taskId, console=console)
+    def uncheckTask(self, programDatas:ProgramDatas, console:Console) -> None:
+        programDatas.uncheckTask(taskId=self._taskId, console=console)
 
 class SubCommandType:
 
@@ -230,12 +230,12 @@ class SubCommand:
             taskDescription = TaskDescription(taskDescriptionStr=argumentLineSplited[1])
             return ArgumentLineAdd(projectName=projectName, taskDescription=taskDescription)
 
-    def executeAdd(self, argumentLine:ArgumentLineAdd, projects:ProjectList, console:Console) -> None:
+    def executeAdd(self, argumentLine:ArgumentLineAdd, programDatas:ProgramDatas, console:Console) -> None:
         if self._type.isProject():
-            argumentLine.addProject(projects=projects)
+            argumentLine.addProject(programDatas=programDatas)
 
         if self._type.isTask():
-            argumentLine.addTask(projects=projects, console=console)
+            argumentLine.addTask(programDatas=programDatas, console=console)
 
 class CommandRest:
 
@@ -252,14 +252,14 @@ class CommandRest:
             self._argumentLine = ArgumentLineSetDone(taskId=taskId)
             return
 
-    def executeAdd(self, projects:ProjectList, console:Console) -> None:
-        self._subCommand.executeAdd(argumentLine=self._argumentLine, projects=projects, console=console)
+    def executeAdd(self, programDatas:ProgramDatas, console:Console) -> None:
+        self._subCommand.executeAdd(argumentLine=self._argumentLine, programDatas=programDatas, console=console)
 
-    def executeCheck(self, projects:ProjectList, console:Console) -> None:
-        self._argumentLine.checkTask(projects=projects, console=console)
+    def executeCheck(self, programDatas:ProgramDatas, console:Console) -> None:
+        self._argumentLine.checkTask(programDatas=programDatas, console=console)
 
-    def executeUncheck(self, projects:ProjectList, console:Console) -> None:
-        self._argumentLine.uncheckTask(projects=projects, console=console)
+    def executeUncheck(self, programDatas:ProgramDatas, console:Console) -> None:
+        self._argumentLine.uncheckTask(programDatas=programDatas, console=console)
 
 class CommandType:
     
@@ -308,22 +308,22 @@ class Command:
             taskId = TaskId(taskIdInt=int(commandRestStr))
             return CommandRest(taskId=taskId)
 
-    def execute(self, commandRest:CommandRest, projects:ProjectList, console:Console) -> None:
+    def execute(self, commandRest:CommandRest, programDatas:ProgramDatas, console:Console) -> None:
 
         if self._type.isShow():
-            console.printShow(projects=projects)
+            console.printShow(programDatas=programDatas)
             return
 
         if self._type.isAdd():
-            commandRest.executeAdd(projects=projects, console=console)
+            commandRest.executeAdd(programDatas=programDatas, console=console)
             return
 
         if self._type.isCheck():
-            commandRest.executeCheck(projects=projects, console=console)
+            commandRest.executeCheck(programDatas=programDatas, console=console)
             return
 
         if self._type.isUncheck():
-            commandRest.executeUncheck(projects=projects, console=console)
+            commandRest.executeUncheck(programDatas=programDatas, console=console)
             return
 
         if self._type.isHelp():
@@ -348,20 +348,22 @@ class CommandLine:
         if len(commandLineSplited) > 1:
             self._commandRest = self._command.createCommandRest(commandRestStr=commandLineSplited[1])
 
-    def execute(self, projects:ProjectList, console:Console) -> None:
-        self._command.execute(commandRest=self._commandRest, projects=projects, console=console)
+    def execute(self, programDatas:ProgramDatas, console:Console) -> None:
+        self._command.execute(commandRest=self._commandRest, programDatas=programDatas, console=console)
 
+# 3 argument, à modif
 class ProgramLoop:
     QUIT = "quit"
     _console:Console
-    _projects:ProjectList
+    _programDatass:ProgramDatas
 
     def __init__(self, console: Console) -> None:
 
         self._console = console
-        self._projects = ProjectList()
+        self._programDatas = ProgramDatas()
 
     def run(self) -> None:
+        # 2 identation, à modif
         while True:
             command = self._console.input("> ")
             if command == self.QUIT:
@@ -370,4 +372,4 @@ class ProgramLoop:
 
     def execute(self, command_line: str) -> None:
         commandLine = CommandLine(commandLineStr=command_line)
-        commandLine.execute(projects=self._projects, console=self._console)
+        commandLine.execute(programDatas=self._programDatas, console=self._console)
