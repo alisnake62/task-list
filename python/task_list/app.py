@@ -11,6 +11,12 @@ class ProjectNameType:
     def __init__(self, projetNameStr:str) -> None:
         self._value = projetNameStr
 
+    def __str__(self) -> str:
+        return str(self._value)
+
+    def __eq__(self, otherProjectNameType: object) -> bool:
+        return self._value == otherProjectNameType._value
+
 class TaskIdType:
 
     _value:int
@@ -21,8 +27,8 @@ class TaskIdType:
     def __str__(self) -> str:
         return str(self._value)
 
-    def __eq__(self, otherTaskType: object) -> bool:
-        return self._value == otherTaskType._value
+    def __eq__(self, otherTaskIdType: object) -> bool:
+        return self._value == otherTaskIdType._value
 
     def _valuePlusOne(self):
         self._value += 1
@@ -66,17 +72,17 @@ class Task:
 
 class Project:
 
-    def __init__(self, name:str) -> None:
+    def __init__(self, name:ProjectNameType) -> None:
         self._name = name
         self._tasks:List[Task] = []
 
     def __str__(self) -> str:
-        return self._name
+        return str(self._name)
 
     def addTask(self, task:Task) -> None:
         self._tasks.append(task)
 
-    def isThisName(self, name:str) -> bool:
+    def isThisName(self, name:ProjectNameType) -> bool:
         return self._name == name
 
     def findTaskById(self, id:TaskIdType) -> Task:
@@ -106,7 +112,7 @@ class ProjectList:
 
         console.printTaskNotFound(taskId=taskId)
 
-    def addTask(self, projectName:str, taskDescription:str, console:Console):
+    def addTask(self, projectName:ProjectNameType, taskDescription:str, console:Console):
 
         projectFound = False
         for project in self._projects:
@@ -138,10 +144,10 @@ class ArgumentLine:
 
 class ArgumentLineAdd(ArgumentLine):
 
-    _projectName:str
+    _projectName:ProjectNameType
     _taskDescription:str = None
 
-    def __init__(self, projectName:str, taskDescription:str=None) -> None:
+    def __init__(self, projectName:ProjectNameType, taskDescription:str=None) -> None:
         self._projectName = projectName
         self._taskDescription = taskDescription
 
@@ -155,8 +161,8 @@ class ArgumentLineSetDone(ArgumentLine):
 
     _taskId:TaskIdType
 
-    def __init__(self, taskIdStr:str) -> None:
-        self._taskId = TaskIdType(taskIdInt = int(taskIdStr))
+    def __init__(self, taskId:TaskIdType) -> None:
+        self._taskId = taskId
 
     def checkTask(self, projects:ProjectList, console:Console) -> None:
         projects.checkTask(taskId=self._taskId, console=console)
@@ -189,11 +195,12 @@ class SubCommand:
 
     def createArgumentLineAdd(self, argumentLineStr:str) -> ArgumentLineAdd:
         if self._type.isProject():
-            return ArgumentLineAdd(projectName=argumentLineStr)
+            projectName = ProjectNameType(projetNameStr=argumentLineStr)
+            return ArgumentLineAdd(projectName=projectName)
 
         if self._type.isTask():
             argumentLineSplited = argumentLineStr.split(" ")
-            projectName = argumentLineSplited[0]
+            projectName = ProjectNameType(projetNameStr=argumentLineSplited[0])
             taskDescription = argumentLineSplited[1]
             return ArgumentLineAdd(projectName=projectName, taskDescription=taskDescription)
 
@@ -216,7 +223,8 @@ class CommandRest:
             return
 
         if taskIdStr is not None:
-            self._argumentLine = ArgumentLineSetDone(taskIdStr=taskIdStr)
+            taskId = TaskIdType(taskIdInt=int(taskIdStr))
+            self._argumentLine = ArgumentLineSetDone(taskId=taskId)
             return
 
     def executeAdd(self, projects:ProjectList, console:Console) -> None:
