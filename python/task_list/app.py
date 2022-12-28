@@ -315,7 +315,7 @@ class CommandRest:
 
 class CommandType:
     
-    _expectedValue:List[str] = ["show", "add", "check", "uncheck", "help"]
+    _expectedValue:List[str] = ["show", "add", "check", "uncheck", "help", "quit"]
     _value:str
 
     def __init__(self, commandStr:str) -> None:
@@ -335,6 +335,9 @@ class CommandType:
 
     def isHelp(self):
         return self._value == "help"
+
+    def isQuit(self):
+        return self._value == "quit"
 
     def isError(self):
         return self._value not in self._expectedValue
@@ -360,6 +363,9 @@ class Command:
         if self._type.isCheck() or self._type.isUncheck():
             taskId = TaskId(taskIdInt=int(commandRestStr))
             return CommandRest(taskId=taskId)
+
+    def isQuit(self) -> bool:
+        return self._type.isQuit()
 
     def execute(self, commandRest:CommandRest, programDatas:ProgramDatas, console:Console) -> None:
 
@@ -404,9 +410,10 @@ class CommandLine:
     def execute(self, programDatas:ProgramDatas, console:Console) -> None:
         self._command.execute(commandRest=self._commandRest, programDatas=programDatas, console=console)
 
-# 3 argument, à modif
+    def isQuit(self) -> bool:
+        return self._command.isQuit()
+
 class ProgramLoop:
-    QUIT = "quit"
     _console:Console
     _programDatas:ProgramDatas
 
@@ -418,11 +425,10 @@ class ProgramLoop:
     def run(self) -> None:
         # 2 identation, à modif
         while True:
-            command = self._console.input("> ")
-            if command == self.QUIT:
-                break
-            self.execute(command)
+            commandLineStr = self._console.input("> ")
 
-    def execute(self, command_line: str) -> None:
-        commandLine = CommandLine(commandLineStr=command_line)
-        commandLine.execute(programDatas=self._programDatas, console=self._console)
+            commandLine = CommandLine(commandLineStr=commandLineStr)
+            if commandLine.isQuit():
+                break
+
+            commandLine.execute(programDatas=self._programDatas, console=self._console)
