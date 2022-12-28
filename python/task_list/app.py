@@ -58,22 +58,38 @@ class TaskDone:
     def is_done(self) -> bool:
         return self._value
 
-class Task:
+class TaskIdentity:
 
-    # 3 arguments, à revoir
-    def __init__(self, id: TaskId, description: TaskDescription, done:TaskDone=TaskDone(taskDoneBooleanValue=False)) -> None:
+    _id: TaskId
+    _description: TaskDescription
+
+    def __init__(self, id: TaskId, description:TaskDescription) -> None:
         self._id = id
         self._description = description
+
+    def __str__(self) -> str:
+        return f"{self._id}: {self._description}"
+
+    def isThisId(self, id:TaskId) -> bool:
+        return self._id == id
+
+class Task:
+
+    _identity: TaskIdentity
+    _done: TaskDone
+
+    def __init__(self, identity:TaskIdentity, done:TaskDone=TaskDone(taskDoneBooleanValue=False)) -> None:
+        self._identity = identity
         self._done = done
 
     def __str__(self) -> str:
-        return f"  [{'x' if self._done.is_done() else ' '}] {self._id}: {self._description}"  # à modif
+        return f"  [{'x' if self._done.is_done() else ' '}] {self._identity}"  # à modif
 
     def set_done(self, done: TaskDone) -> None:
         self._done = done
 
     def isThisId(self, id:TaskId) -> bool:
-        return self._id == id
+        return self._identity.isThisId(id=id)
 
 class Project:
 
@@ -127,7 +143,8 @@ class ProjectList:
             if project.isThisName(name=projectName):
                 projectFound = True
                 taskId = self._lastTaskId.nextOne()
-                project.addTask(Task(id=taskId, description=taskDescription))
+                taskIdentity = TaskIdentity(id=taskId, description=taskDescription)
+                project.addTask(Task(identity=taskIdentity))
                 self._lastTaskId = taskId
                 break
 
