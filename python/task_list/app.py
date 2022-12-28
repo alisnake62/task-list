@@ -19,7 +19,7 @@ class Task:
     def is_done(self) -> bool:
         return self._done
 
-    def isGoodId(self, id:int) -> bool:
+    def isThisId(self, id:int) -> bool:
         return self._id == id
 
 class Project:
@@ -39,7 +39,7 @@ class Project:
 
     def findTaskById(self, id:int) -> Task:
         for task in self._tasks:
-            if task.isGoodId(id=id): return task
+            if task.isThisId(id=id): return task
         return None
 
     def lastTaskId(self) -> int:
@@ -132,6 +132,20 @@ class ArgumentLineSetDone(ArgumentLine):
     def __init__(self, taskIdStr:str) -> None:
         self._taskId = int(taskIdStr)
 
+    def _findTaskById(self, projects:List[Project]) -> Task:
+        for project in projects:
+            findedTask = project.findTaskById(id=self._taskId)
+            if findedTask is not None:
+                return findedTask
+
+    def checkTask(self, projects:List[Project]) -> None:
+        task = self._findTaskById(projects=projects)
+        task.set_done(done=True)
+
+    def uncheckTask(self, projects:List[Project]) -> None:
+        task = self._findTaskById(projects=projects)
+        task.set_done(done=False)
+
 class SubCommand:
 
     _expectedValue = ["project", "task"]
@@ -162,28 +176,6 @@ class SubCommand:
     def _isTask(self):
         return self._value == "task"
 
-# class Argument:
-#     def __init__(self, value:str) -> None:
-#         self._value = value
-
-#     def isThis(self, argument:str):
-#         return self._value == argument
-
-#     def createTask(self, id:int) -> 'Task':
-#         return Task(id_=id, description=self._value, done=False)
-
-#     def setTaskDone(self, projects:List['Project'], done:bool) -> None:
-#         id = int(self._value)
-#         for project in projects:
-#             task = project.findTaskById(id=id)
-#             if task is not None: 
-#                 task.set_done(done)
-#                 return
-
-#     def addProject(self, projects:List['Project']) -> None:
-#         projects.append(Project(name=self._value))
-
-
 class CommandRest:
 
     _subCommand:SubCommand = None
@@ -193,12 +185,20 @@ class CommandRest:
         if subCommandStr is not None:
             self._subCommand = SubCommand(value=subCommandStr)
             self._argumentLine = self._subCommand.createArgumentLineAdd(argumentLineStr=argumentLineStr)
+            return
 
         if taskIdStr is not None:
             self._argumentLine = ArgumentLineSetDone(taskIdStr=taskIdStr)
+            return
 
     def executeAdd(self, projects:List[Project]) -> None:
         self._subCommand.executeAdd(argumentLine=self._argumentLine, projects=projects)
+
+    def executeCheck(self, projects:List[Project]) -> None:
+        self._argumentLine.checkTask(projects=projects)
+
+    def executeUncheck(self, projects:List[Project]) -> None:
+        self._argumentLine.uncheckTask(projects=projects)
 
 class Command:
 
@@ -220,6 +220,15 @@ class Command:
     def execute(self, commandRest:CommandRest, projects:List[Project]) -> None:
         if self._isAdd():
             commandRest.executeAdd(projects=projects)
+            return
+
+        if self._isCheck():
+            commandRest.executeCheck(projects=projects)
+            return
+
+        if self._isUncheck():
+            commandRest.executeUncheck(projects=projects)
+            return
 
     def _isShow(self):
         return self._value == "show"
@@ -242,8 +251,6 @@ class Command:
     def error(self, taskList:'TaskList'):
         taskList.error(self._value)
 
-
-
 class CommandLine:
 
     _command:Command
@@ -259,30 +266,6 @@ class CommandLine:
 
     def execute(self, projects:List[Project]) -> None:
         self._command.execute(commandRest=self._commandRest, projects=projects)
-
-    def subCommandIsProject(self):
-        return self._subCommand.isProject()
-
-    def subCommandIsTask(self):
-        return self._subCommand.isTask()
-
-    def isThisProject(self, projectName:str):
-        if len(self._arguments) > 0:
-            return self._arguments[0].isThis(argument=projectName)
-        return False
-
-    # def createTask(self, id:int) -> 'Task':
-    #     if len(self._arguments) > 1:
-    #         return self._arguments[1].createTask(id=id)
-
-    def setTaskDone(self, projects:List['Project'], done:bool) -> None:
-        if len(self._arguments) > 0:
-            self._arguments[0].setTaskDone(projects=projects, done=done)
-
-    def addProject(self, projects:List['Project']) -> None:
-        if len(self._arguments) > 0:
-            self._arguments[0].addProject(projects=projects)
-
 
 class TaskList:
     QUIT = "quit"
@@ -301,7 +284,6 @@ class TaskList:
 
     def execute(self, command_line: str) -> None:
 
-        # actionUtils = ActionUtils(console=self.console, projects=self.tasks)
         commandLine = CommandLine(value=command_line)
         commandLine.execute(projects=self._projects)
         test = "toto"
