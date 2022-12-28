@@ -424,6 +424,7 @@ class CommandLine:
 
     def __init__(self, commandLineStr:str) -> None:
 
+        commandLineStr = commandLineStr.strip()
         commandLineSplited = commandLineStr.split(" ", 1)
         commandStr = commandLineSplited[0]
         self._command = Command(type=CommandType(commandStr=commandStr))
@@ -457,7 +458,7 @@ class Console:
 
     def inputPrompt(self) -> str:
         self._printPrompt()
-        commandLineStr = self.input_reader.readline().strip()  # plus de 1 points, à revoir
+        commandLineStr = self.input_reader.readline()
         return CommandLine(commandLineStr=commandLineStr) 
 
 class ProgramLoop:
