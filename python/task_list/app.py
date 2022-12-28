@@ -206,15 +206,10 @@ class ProgramDatas:
     def addProject(self, project:Project) -> None:
         self._projectList.addProject(project=project)
 
-    def checkTask(self, taskId:TaskId, console:Console) -> None:
+    def setDone(self, taskId:TaskId, taskDone:TaskDone, console:Console) -> None:
         task = self._findTaskById(taskId=taskId, console=console)
         if task is not None:
-            task.set_done(done=TaskDone(taskDoneBooleanValue=True))
-
-    def uncheckTask(self, taskId:TaskId, console:Console) -> None:
-        task = self._findTaskById(taskId=taskId, console=console)
-        if task is not None:
-            task.set_done(done=TaskDone(taskDoneBooleanValue=False))
+            task.set_done(done=taskDone)
 
 class ArgumentLine:
     pass
@@ -241,11 +236,8 @@ class ArgumentLineSetDone(ArgumentLine):
     def __init__(self, taskId:TaskId) -> None:
         self._taskId = taskId
 
-    def checkTask(self, programDatas:ProgramDatas, console:Console) -> None:
-        programDatas.checkTask(taskId=self._taskId, console=console)
-
-    def uncheckTask(self, programDatas:ProgramDatas, console:Console) -> None:
-        programDatas.uncheckTask(taskId=self._taskId, console=console)
+    def setDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:Console) -> None:
+        programDatas.setDone(taskId=self._taskId, taskDone=taskDone, console=console)
 
 class SubCommandType:
 
@@ -307,11 +299,8 @@ class CommandRest:
     def executeAdd(self, programDatas:ProgramDatas, console:Console) -> None:
         self._subCommand.executeAdd(argumentLine=self._argumentLine, programDatas=programDatas, console=console)
 
-    def executeCheck(self, programDatas:ProgramDatas, console:Console) -> None:
-        self._argumentLine.checkTask(programDatas=programDatas, console=console)
-
-    def executeUncheck(self, programDatas:ProgramDatas, console:Console) -> None:
-        self._argumentLine.uncheckTask(programDatas=programDatas, console=console)
+    def executeSetDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:Console) -> None:
+        self._argumentLine.setDone(programDatas=programDatas, taskDone=taskDone, console=console)
 
 class CommandType:
     
@@ -378,11 +367,13 @@ class Command:
             return
 
         if self._type.isCheck():
-            commandRest.executeCheck(programDatas=programDatas, console=console)
+            taskDone = TaskDone(taskDoneBooleanValue=True)
+            commandRest.executeSetDone(programDatas=programDatas, taskDone=taskDone, console=console)
             return
 
         if self._type.isUncheck():
-            commandRest.executeUncheck(programDatas=programDatas, console=console)
+            taskDone = TaskDone(taskDoneBooleanValue=False)
+            commandRest.executeSetDone(programDatas=programDatas, taskDone=taskDone, console=console)
             return
 
         if self._type.isHelp():
@@ -414,6 +405,7 @@ class CommandLine:
         return self._command.isQuit()
 
 class ProgramLoop:
+
     _console:Console
     _programDatas:ProgramDatas
 
