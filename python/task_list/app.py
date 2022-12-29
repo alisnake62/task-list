@@ -107,8 +107,10 @@ class TaskDone:
     def __init__(self, taskDoneBooleanValue:bool = False) -> None:
         self._value = taskDoneBooleanValue
 
-    def is_done(self) -> bool:
-        return self._value
+    def __str__(self) -> str:
+        if self._value:
+            return "[x]"
+        return "[ ]"
 
 class TaskFounded:
 
@@ -142,9 +144,6 @@ class TaskIdentity:
     def __str__(self) -> str:
         return f"{self._id}: {self._description}"
 
-    def isThisId(self, id:TaskId) -> bool:
-        return self._id == id
-
     def taskFounded(self,taskId:TaskId) -> TaskFounded:
         if self._id == taskId:
             return TaskFounded(taskFoundedBooleanValue=True)
@@ -160,7 +159,7 @@ class Task:
         self._done = done
 
     def __str__(self) -> str:
-        return f"  [{'x' if self._done.is_done() else ' '}] {self._identity}"  # à modif, degager la method is done
+        return f"  {self._done} {self._identity}"
 
     def _setDoneIfFounded(self, taskId:TaskId, taskDone:TaskDone, taskFounded:TaskFounded) -> TaskFounded:
         if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
@@ -171,9 +170,6 @@ class Task:
             self._done = taskDone
 
         return taskFounded
-
-    def set_done(self, done: TaskDone) -> None:
-        self._done = done
 
     def checkIfFounded(self, taskId:TaskId, taskFounded:TaskFounded) -> TaskFounded:
         taskDone = TaskDone(taskDoneBooleanValue=True)
@@ -232,9 +228,6 @@ class Project:
 
     def addTask(self, task:Task) -> None:
         self._taskList.addTask(task=task)
-
-    def isThisName(self, name:ProjectName) -> bool:
-        return self._name == name
 
     def checkTaskIfFounded(self, taskId:TaskId, taskFounded:TaskFounded) -> TaskFounded:
         if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
@@ -376,7 +369,7 @@ class SubCommandType:
         self._value = subCommandStr
 
     def isProject(self):
-        return self._value == "project"
+        return self._value == "project"  # degager les method is et faire un __eq__ (faire 2 version)
 
     def isTask(self):
         return self._value == "task"
@@ -442,7 +435,7 @@ class CommandType:
         self._value = commandStr
 
     def isShow(self):
-        return self._value == "show"
+        return self._value == "show"   # degager les method is et faire un __eq__ (faire 2 version)
 
     def isAdd(self):
         return self._value == "add"
@@ -535,7 +528,7 @@ class CommandLine:
     def execute(self, programDatas:ProgramDatas, console:Console) -> None:
         self._command.execute(commandRest=self._commandRest, programDatas=programDatas, console=console)
 
-    def isQuit(self) -> bool:
+    def isQuit(self) -> bool:   # comparer avec command quit (faire 2 version)
         return self._command.isQuit()
 
 class ProgramLoop:
@@ -554,7 +547,7 @@ class ProgramLoop:
 
             commandLineStr = self._console.inputPrompt()
             commandLine = CommandLine(commandLineStr=commandLineStr)
-            if commandLine.isQuit():
+            if commandLine.isQuit(): # comparer avec command quit (faire 2 version)
                 break
 
             commandLine.execute(programDatas=self._programDatas, console=self._console)
