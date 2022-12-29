@@ -120,6 +120,16 @@ class TaskFounded:
     def __eq__(self, otherTaskFounded: object) -> bool:
         return self._value == otherTaskFounded._value
 
+class ProjectFounded:
+
+    _value:bool
+
+    def __init__(self, projectFoundedBooleanValue:bool = False) -> None:
+        self._value = projectFoundedBooleanValue
+
+    def __eq__(self, otherProjectFounded: object) -> bool:
+        return self._value == otherProjectFounded._value
+
 class TaskIdentity:
 
     _id: TaskId
@@ -236,6 +246,17 @@ class Project:
             return taskFounded
         return self._taskList.uncheckIfFounded(taskId=taskId, taskFounded=taskFounded)
 
+    def addTaskIfProjectFounded(self, projectName:ProjectName, taskIdentity:TaskIdentity, projectFounded:ProjectFounded) -> ProjectFounded:
+        if projectFounded == ProjectFounded(projectFoundedBooleanValue=True):
+            return projectFounded
+
+        if self._name == projectName:
+            task = Task(identity=taskIdentity)
+            self._taskList.addTask(task=task)
+            return ProjectFounded(projectFoundedBooleanValue=True)
+
+        return ProjectFounded(projectFoundedBooleanValue=False)
+
 class ProjectList:
 
     _projects:List[Project]
@@ -269,13 +290,12 @@ class ProjectList:
 
         self._consolePrintIfTaskNotFound(taskFounded=taskFounded, taskId=taskId, console=console)
 
-    # 2 indentation, à revoir
-    def findProjectByName(self, projectName:ProjectName) -> Project:
+    def addTaskIfProjectFounded(self, projectName:ProjectName, taskIdentity:TaskIdentity) -> ProjectFounded:
+        projectFounded = ProjectFounded()
         for project in self._projects:
-            if project.isThisName(name=projectName):
-                return project
+            projectFound = project.addTaskIfProjectFounded(projectName=projectName, taskIdentity=taskIdentity, projectFounded=projectFounded)
 
-        return None
+        return projectFound
 
     def addProject(self, project:Project) -> None:
         self._projects.append(project)
@@ -293,19 +313,18 @@ class ProgramDatas:
     def __str__(self) -> str:
         return str(self._projectList)
 
-    def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:Console):
+    def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:Console) -> None:
 
-        projectFound = self._projectList.findProjectByName(projectName=projectName)
-        if projectFound is None:
+        taskId = self._lastTaskId.nextOne()
+        taskIdentity = TaskIdentity(id=taskId, description=taskDescription)
+        projectFounded = self._projectList.addTaskIfProjectFounded(projectName=projectName, taskIdentity=taskIdentity)
 
+        if projectFounded == ProjectFounded(projectFoundedBooleanValue=False):
             outputStr = f"Could not find a project with the name {projectName}."
             output = ConsoleOuput(outputStr=outputStr)
             console.print(output)
             return None
 
-        taskId = self._lastTaskId.nextOne()
-        taskIdentity = TaskIdentity(id=taskId, description=taskDescription)
-        projectFound.addTask(Task(identity=taskIdentity))
         self._lastTaskId = taskId
 
     def addProject(self, project:Project) -> None:
