@@ -4,8 +4,6 @@ if TYPE_CHECKING: from app import Console
 
 from copy import deepcopy
 
-# TODO: bannir les __str__, c'est à considérer comme un Getter
-
 class ConsoleOuput:
 
     _outputStr:str
@@ -106,11 +104,21 @@ class TaskDone:
 
     _value:bool
 
-    def __init__(self, taskDoneBooleanValue:bool) -> None:
+    def __init__(self, taskDoneBooleanValue:bool = False) -> None:
         self._value = taskDoneBooleanValue
 
     def is_done(self) -> bool:
         return self._value
+
+class TaskFounded:
+
+    _value:bool
+
+    def __init__(self, taskFoundedBooleanValue:bool = False) -> None:
+        self._value = taskFoundedBooleanValue
+
+    def __eq__(self, otherTaskFounded: object) -> bool:
+        return self._value == otherTaskFounded._value
 
 class TaskIdentity:
 
@@ -127,23 +135,36 @@ class TaskIdentity:
     def isThisId(self, id:TaskId) -> bool:
         return self._id == id
 
+    def taskFounded(self,taskId:TaskId) -> TaskFounded:
+        if self._id == taskId:
+            return TaskFounded(taskFoundedBooleanValue=True)
+        return TaskFounded(taskFoundedBooleanValue=False)
+
 class Task:
 
     _identity: TaskIdentity
     _done: TaskDone
 
-    def __init__(self, identity:TaskIdentity, done:TaskDone=TaskDone(taskDoneBooleanValue=False)) -> None:
+    def __init__(self, identity:TaskIdentity, done:TaskDone=TaskDone()) -> None:
         self._identity = identity
         self._done = done
 
     def __str__(self) -> str:
-        return f"  [{'x' if self._done.is_done() else ' '}] {self._identity}"  # à modif
+        return f"  [{'x' if self._done.is_done() else ' '}] {self._identity}"  # à modif, degager la method is done
 
     def set_done(self, done: TaskDone) -> None:
         self._done = done
 
-    def isThisId(self, id:TaskId) -> bool:
-        return self._identity.isThisId(id=id)
+    def setDoneIfFounded(self, taskId:TaskId, taskDone:TaskDone, taskFounded:TaskFounded) -> TaskFounded:
+        if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
+            return taskFounded
+
+        taskFounded = self._identity.taskFounded(taskId=taskId)
+        if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
+            self._done = taskDone
+
+        return taskFounded
+
 
 class TaskList:
 
@@ -163,11 +184,16 @@ class TaskList:
     def addTask(self, task:Task) -> None:
         self._tasks.append(task)
 
-    # plus de 2 indentation
-    def findTaskById(self, id:TaskId) -> Task:
+    def setTaskDoneIfFounded(self, taskId:TaskId, taskDone:TaskDone, taskFounded:TaskFounded) -> TaskFounded:
+
+        if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
+            return taskFounded
+
         for task in self._tasks:
-            if task.isThisId(id=id): return task
-        return None
+            taskFounded = task.setDoneIfFounded(taskId=taskId, taskDone=taskDone, taskFounded=taskFounded)
+
+        return taskFounded
+
 
 class Project:
 
@@ -189,8 +215,10 @@ class Project:
     def isThisName(self, name:ProjectName) -> bool:
         return self._name == name
 
-    def findTaskById(self, id:TaskId) -> Task:
-        return self._taskList.findTaskById(id=id)
+    def setTaskDoneIfFounded(self, taskId:TaskId, taskDone:TaskDone, taskFounded:TaskFounded) -> TaskFounded:
+        if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
+            return taskFounded
+        return self._taskList.setTaskDoneIfFounded(taskId=taskId, taskDone=taskDone, taskFounded=taskFounded)
 
 class ProjectList:
 
@@ -205,14 +233,15 @@ class ProjectList:
             toString += f"{project}"
         return toString
 
-    # 2 indentation, à revoir
-    def findTaskById(self, taskId:TaskId) -> Task:
+    def setTaskDone(self, taskId:TaskId, taskDone:TaskDone, console:Console) -> None:
+        taskFounded = TaskFounded()
         for project in self._projects:
-            findedTask = project.findTaskById(id=taskId)
-            if findedTask is not None:
-                return findedTask
+            taskFounded = project.setTaskDoneIfFounded(taskId=taskId, taskDone=taskDone, taskFounded=taskFounded)
 
-        return None
+        if taskFounded == TaskFounded(taskFoundedBooleanValue=False):
+            outputStr = f"Could not find a task with an ID of {taskId}"
+            output = ConsoleOuput(outputStr=outputStr)
+            console.print(output)
 
     # 2 indentation, à revoir
     def findProjectByName(self, projectName:ProjectName) -> Project:
@@ -238,14 +267,6 @@ class ProgramDatas:
     def __str__(self) -> str:
         return str(self._projectList)
 
-    def _findTaskById(self, taskId:TaskId, console:Console) -> Task:
-        taskFounded = self._projectList.findTaskById(taskId=taskId)
-        if taskFounded is None:
-            outputStr = f"Could not find a task with an ID of {taskId}"
-            output = ConsoleOuput(outputStr=outputStr)
-            console.print(output)
-        return taskFounded
-
     def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:Console):
 
         projectFound = self._projectList.findProjectByName(projectName=projectName)
@@ -264,10 +285,8 @@ class ProgramDatas:
     def addProject(self, project:Project) -> None:
         self._projectList.addProject(project=project)
 
-    def setDone(self, taskId:TaskId, taskDone:TaskDone, console:Console) -> None:
-        task = self._findTaskById(taskId=taskId, console=console)
-        if task is not None:
-            task.set_done(done=taskDone)
+    def setTaskDone(self, taskId:TaskId, taskDone:TaskDone, console:Console) -> None:
+        self._projectList.setTaskDone(taskId=taskId, taskDone=taskDone, console=console)
 
 class ArgumentLine:
     pass
@@ -294,8 +313,8 @@ class ArgumentLineSetDone(ArgumentLine):
     def __init__(self, taskId:TaskId) -> None:
         self._taskId = taskId
 
-    def setDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:Console) -> None:
-        programDatas.setDone(taskId=self._taskId, taskDone=taskDone, console=console)
+    def setDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:Console) -> None:    # setter à degager ?
+        programDatas.setTaskDone(taskId=self._taskId, taskDone=taskDone, console=console)
 
 class SubCommandType:
 
