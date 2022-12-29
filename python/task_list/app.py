@@ -152,10 +152,7 @@ class Task:
     def __str__(self) -> str:
         return f"  [{'x' if self._done.is_done() else ' '}] {self._identity}"  # à modif, degager la method is done
 
-    def set_done(self, done: TaskDone) -> None:
-        self._done = done
-
-    def setDoneIfFounded(self, taskId:TaskId, taskDone:TaskDone, taskFounded:TaskFounded) -> TaskFounded:
+    def _setDoneIfFounded(self, taskId:TaskId, taskDone:TaskDone, taskFounded:TaskFounded) -> TaskFounded:
         if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
             return taskFounded
 
@@ -164,6 +161,17 @@ class Task:
             self._done = taskDone
 
         return taskFounded
+
+    def set_done(self, done: TaskDone) -> None:
+        self._done = done
+
+    def checkIfFounded(self, taskId:TaskId, taskFounded:TaskFounded) -> TaskFounded:
+        taskDone = TaskDone(taskDoneBooleanValue=True)
+        return self._setDoneIfFounded(taskId=taskId, taskDone=taskDone, taskFounded=taskFounded)
+
+    def uncheckIfFounded(self, taskId:TaskId, taskFounded:TaskFounded) -> TaskFounded:
+        taskDone = TaskDone(taskDoneBooleanValue=False)
+        return self._setDoneIfFounded(taskId=taskId, taskDone=taskDone, taskFounded=taskFounded)
 
 
 class TaskList:
@@ -184,16 +192,19 @@ class TaskList:
     def addTask(self, task:Task) -> None:
         self._tasks.append(task)
 
-    def setTaskDoneIfFounded(self, taskId:TaskId, taskDone:TaskDone, taskFounded:TaskFounded) -> TaskFounded:
-
-        if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
-            return taskFounded
+    def checkIfFounded(self, taskId:TaskId, taskFounded:TaskFounded) -> TaskFounded:
 
         for task in self._tasks:
-            taskFounded = task.setDoneIfFounded(taskId=taskId, taskDone=taskDone, taskFounded=taskFounded)
+            taskFounded = task.checkIfFounded(taskId=taskId, taskFounded=taskFounded)
 
         return taskFounded
 
+    def uncheckIfFounded(self, taskId:TaskId, taskFounded:TaskFounded) -> TaskFounded:
+
+        for task in self._tasks:
+            taskFounded = task.uncheckIfFounded(taskId=taskId, taskFounded=taskFounded)
+
+        return taskFounded
 
 class Project:
 
@@ -215,10 +226,15 @@ class Project:
     def isThisName(self, name:ProjectName) -> bool:
         return self._name == name
 
-    def setTaskDoneIfFounded(self, taskId:TaskId, taskDone:TaskDone, taskFounded:TaskFounded) -> TaskFounded:
+    def checkTaskIfFounded(self, taskId:TaskId, taskFounded:TaskFounded) -> TaskFounded:
         if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
             return taskFounded
-        return self._taskList.setTaskDoneIfFounded(taskId=taskId, taskDone=taskDone, taskFounded=taskFounded)
+        return self._taskList.checkIfFounded(taskId=taskId, taskFounded=taskFounded)
+
+    def uncheckTaskIfFounded(self, taskId:TaskId, taskFounded:TaskFounded) -> TaskFounded:
+        if taskFounded == TaskFounded(taskFoundedBooleanValue=True):
+            return taskFounded
+        return self._taskList.uncheckIfFounded(taskId=taskId, taskFounded=taskFounded)
 
 class ProjectList:
 
@@ -233,15 +249,25 @@ class ProjectList:
             toString += f"{project}"
         return toString
 
-    def setTaskDone(self, taskId:TaskId, taskDone:TaskDone, console:Console) -> None:
-        taskFounded = TaskFounded()
-        for project in self._projects:
-            taskFounded = project.setTaskDoneIfFounded(taskId=taskId, taskDone=taskDone, taskFounded=taskFounded)
-
+    def _consolePrintIfTaskNotFound(self, taskFounded:TaskFounded, taskId:TaskId, console:Console) -> None:
         if taskFounded == TaskFounded(taskFoundedBooleanValue=False):
             outputStr = f"Could not find a task with an ID of {taskId}"
             output = ConsoleOuput(outputStr=outputStr)
             console.print(output)
+
+    def checkTask(self, taskId:TaskId, console:Console) -> None:
+        taskFounded = TaskFounded()
+        for project in self._projects:
+            taskFounded = project.checkTaskIfFounded(taskId=taskId, taskFounded=taskFounded)
+
+        self._consolePrintIfTaskNotFound(taskFounded=taskFounded, taskId=taskId, console=console)
+
+    def uncheckTask(self, taskId:TaskId, console:Console) -> None:
+        taskFounded = TaskFounded()
+        for project in self._projects:
+            taskFounded = project.uncheckTaskIfFounded(taskId=taskId, taskFounded=taskFounded)
+
+        self._consolePrintIfTaskNotFound(taskFounded=taskFounded, taskId=taskId, console=console)
 
     # 2 indentation, à revoir
     def findProjectByName(self, projectName:ProjectName) -> Project:
@@ -285,8 +311,11 @@ class ProgramDatas:
     def addProject(self, project:Project) -> None:
         self._projectList.addProject(project=project)
 
-    def setTaskDone(self, taskId:TaskId, taskDone:TaskDone, console:Console) -> None:
-        self._projectList.setTaskDone(taskId=taskId, taskDone=taskDone, console=console)
+    def checkTask(self, taskId:TaskId, console:Console) -> None:
+        self._projectList.checkTask(taskId=taskId, console=console)
+
+    def uncheckTask(self, taskId:TaskId, console:Console) -> None:
+        self._projectList.uncheckTask(taskId=taskId, console=console)
 
 class ArgumentLine:
     pass
@@ -313,8 +342,11 @@ class ArgumentLineSetDone(ArgumentLine):
     def __init__(self, taskId:TaskId) -> None:
         self._taskId = taskId
 
-    def setDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:Console) -> None:    # setter à degager ?
-        programDatas.setTaskDone(taskId=self._taskId, taskDone=taskDone, console=console)
+    def check(self, programDatas:ProgramDatas, console:Console) -> None:
+        programDatas.checkTask(taskId=self._taskId, console=console)
+
+    def uncheck(self, programDatas:ProgramDatas, console:Console) -> None:
+        programDatas.uncheckTask(taskId=self._taskId, console=console)
 
 class SubCommandType:
 
@@ -376,8 +408,11 @@ class CommandRest:
     def executeAdd(self, programDatas:ProgramDatas, console:Console) -> None:
         self._subCommand.executeAdd(argumentLine=self._argumentLine, programDatas=programDatas, console=console)
 
-    def executeSetDone(self, programDatas:ProgramDatas, taskDone:TaskDone, console:Console) -> None:
-        self._argumentLine.setDone(programDatas=programDatas, taskDone=taskDone, console=console)
+    def executeCheck(self, programDatas:ProgramDatas, console:Console) -> None:
+        self._argumentLine.check(programDatas=programDatas, console=console)
+
+    def executeUncheck(self, programDatas:ProgramDatas, console:Console) -> None:
+        self._argumentLine.uncheck(programDatas=programDatas, console=console)
 
 class CommandType:
 
@@ -447,13 +482,11 @@ class Command:
             return
 
         if self._type.isCheck():
-            taskDone = TaskDone(taskDoneBooleanValue=True)
-            commandRest.executeSetDone(programDatas=programDatas, taskDone=taskDone, console=console)
+            commandRest.executeCheck(programDatas=programDatas, console=console)
             return
 
         if self._type.isUncheck():
-            taskDone = TaskDone(taskDoneBooleanValue=False)
-            commandRest.executeSetDone(programDatas=programDatas, taskDone=taskDone, console=console)
+            commandRest.executeUncheck(programDatas=programDatas, console=console)
             return
 
         if self._type.isHelp():
