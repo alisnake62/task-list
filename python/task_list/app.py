@@ -24,25 +24,22 @@ class ConsoleOuput:
     def __str__(self) -> str:
         return self._outputStr
 
-    def addNewLine(self):
+    def addNewLine(self) -> None:
         self._outputStr += "\n"
 
-class ConsoleInput:
-
-    _inputStr:str
-
-    def __init__(self, inputStr) -> None:
-        self._inputStr = inputStr
-
 class Console:
+
+    _input_reader:IO
+    _output_writer:IO
+
     def __init__(self, input_reader: IO, output_writer: IO) -> None:
-        self.input_reader = input_reader
-        self.output_writer = output_writer
+        self._input_reader = input_reader
+        self._output_writer = output_writer
 
-    def _write(self, output:ConsoleOuput):
+    def _write(self, output:ConsoleOuput) -> None:
 
-        self.output_writer.write(f"{output}")
-        self.output_writer.flush()
+        self._output_writer.write(f"{output}")
+        self._output_writer.flush()
 
     def _printPrompt(self) -> None:
         promptOutput = ConsoleOuput(outputStr="> ")
@@ -54,7 +51,7 @@ class Console:
 
     def inputPrompt(self) -> str:
         self._printPrompt()
-        return self.input_reader.readline()
+        return self._input_reader.readline()
 
 class ProjectName:
 
@@ -82,10 +79,10 @@ class TaskId:
     def __eq__(self, otherTaskId: object) -> bool:
         return self._value == otherTaskId._value
 
-    def _valuePlusOne(self):
+    def _valuePlusOne(self) -> None:
         self._value += 1
 
-    def nextOne(self):
+    def nextOne(self) -> 'TaskId':
         nextTaskId = deepcopy(self)
         nextTaskId._valuePlusOne()
         return nextTaskId
@@ -368,13 +365,13 @@ class SubCommandType:
     def __init__(self, subCommandStr:str) -> None:
         self._value = subCommandStr
 
-    def isProject(self):
+    def isProject(self) -> bool:
         return self._value == "project"  # degager les method is et faire un __eq__ (faire 2 version)
 
-    def isTask(self):
+    def isTask(self) -> bool:
         return self._value == "task"
 
-    def isError(self):
+    def isError(self) -> bool:
         return self._value not in self._expectedValue
 
 class SubCommand:
@@ -434,31 +431,29 @@ class CommandType:
     def __init__(self, commandStr:str) -> None:
         self._value = commandStr
 
-    def isShow(self):
+    def __str__(self) -> str:
+        return self._value
+
+    def isShow(self) -> bool:
         return self._value == "show"   # degager les method is et faire un __eq__ (faire 2 version)
 
-    def isAdd(self):
+    def isAdd(self) -> bool:
         return self._value == "add"
 
-    def isCheck(self):
+    def isCheck(self) -> bool:
         return self._value == "check"
 
-    def isUncheck(self):
+    def isUncheck(self) -> bool:
         return self._value == "uncheck"
 
-    def isHelp(self):
+    def isHelp(self) -> bool:
         return self._value == "help"
 
-    def isQuit(self):
+    def isQuit(self) -> bool:
         return self._value == "quit"
 
-    def isError(self):
+    def isError(self) -> bool:
         return self._value not in self._expectedValue
-
-    def printError(self, console:Console):
-        outputStr = f"I don't know what the command {self._value} is."
-        output = ConsoleOuput(outputStr=outputStr)
-        console.print(output)
 
 class Command:
 
@@ -507,7 +502,9 @@ class Command:
             return
 
         if self._type.isError():
-            self._type.printError(console=console)
+            outputStr = f"I don't know what the command {self._type} is."
+            output = ConsoleOuput(outputStr=outputStr)
+            console.print(output)
             return
 
 class CommandLine:
