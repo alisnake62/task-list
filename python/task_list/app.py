@@ -295,7 +295,7 @@ class Command:
             taskId = TaskId(taskIdInt=int(commandRestStr))
             return CommandRest(taskId=taskId)
 
-    def loopContinue(self) -> LoopContinue:  # comparer avec command quit (faire 2 version)
+    def loopContinue(self) -> LoopContinue:
         if self._type.isQuit():
             return LoopContinue(loopContinueBooleanValue=False)
         return LoopContinue(loopContinueBooleanValue=True)

@@ -110,7 +110,7 @@ class SubCommandType:
         self._value = subCommandStr
 
     def isProject(self) -> bool:
-        return self._value == "project"  # degager les method is et faire un __eq__ (faire 2 version)
+        return self._value == "project"
 
     def isTask(self) -> bool:
         return self._value == "task"
@@ -130,7 +130,7 @@ class CommandType:
         return self._value
 
     def isShow(self) -> bool:
-        return self._value == "show"   # degager les method is et faire un __eq__ (faire 2 version)
+        return self._value == "show"
 
     def isAdd(self) -> bool:
         return self._value == "add"
