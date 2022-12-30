@@ -5,12 +5,12 @@ from console import Console
 
 class TaskIdentity:
 
-    _id: TaskId
+    _id         : TaskId
     _description: TaskDescription
 
     def __init__(self, id: TaskId, description:TaskDescription) -> None:
-        self._id = id
-        self._description = description
+        self._id            = id
+        self._description   = description
 
     def __str__(self) -> str:
         return f"{self._id}: {self._description}"
@@ -22,12 +22,12 @@ class TaskIdentity:
 
 class Task:
 
-    _identity: TaskIdentity
-    _done: TaskDone
+    _identity   : TaskIdentity
+    _done       : TaskDone
 
     def __init__(self, identity:TaskIdentity, done:TaskDone=TaskDone()) -> None:
-        self._identity = identity
-        self._done = done
+        self._identity  = identity
+        self._done      = done
 
     def __str__(self) -> str:
         return f"  {self._done} {self._identity}"
@@ -85,17 +85,15 @@ class TaskList:
 
 class Project:
 
-    _name:ProjectName
-    _taskList:TaskList
+    _name       :ProjectName
+    _taskList   :TaskList
 
     def __init__(self, name:ProjectName) -> None:
-        self._name = name
-        self._taskList = TaskList()
+        self._name      = name
+        self._taskList  = TaskList()
 
     def __str__(self) -> str:
-        toString = f"{self._name}\n"
-        toString += f"{self._taskList}"
-        return toString
+        return f"{self._name}\n{self._taskList}"
 
     def addTask(self, task:Task) -> None:
         self._taskList.addTask(task=task)
@@ -137,8 +135,7 @@ class ProjectList:
     def _consolePrintIfTaskNotFound(self, taskFounded:TaskFounded, taskId:TaskId, console:Console) -> None:
         if taskFounded == TaskFounded(taskFoundedBooleanValue=False):
             outputStr = f"Could not find a task with an ID of {taskId}"
-            output = ConsoleOuput(outputStr=outputStr)
-            console.print(output)
+            console.print(output=ConsoleOuput(outputStr=outputStr))
 
     def checkTask(self, taskId:TaskId, console:Console) -> None:
         taskFounded = TaskFounded()
@@ -168,25 +165,24 @@ class ProjectList:
 class ProgramDatas:
 
     _projectList:ProjectList
-    _lastTaskId:TaskId
+    _lastTaskId :TaskId
 
     def __init__(self) -> None:
-        self._projectList = ProjectList()
-        self._lastTaskId = TaskId()
+        self._projectList   = ProjectList()
+        self._lastTaskId    = TaskId()
 
     def __str__(self) -> str:
         return str(self._projectList)
 
     def addTask(self, projectName:ProjectName, taskDescription:TaskDescription, console:Console) -> None:
 
-        taskId = self._lastTaskId.nextOne()
-        taskIdentity = TaskIdentity(id=taskId, description=taskDescription)
-        projectFounded = self._projectList.addTaskIfProjectFounded(projectName=projectName, taskIdentity=taskIdentity)
+        taskId          = self._lastTaskId.nextOne()
+        taskIdentity    = TaskIdentity(id=taskId, description=taskDescription)
+        projectFounded  = self._projectList.addTaskIfProjectFounded(projectName=projectName, taskIdentity=taskIdentity)
 
         if projectFounded == ProjectFounded(projectFoundedBooleanValue=False):
             outputStr = f"Could not find a project with the name {projectName}."
-            output = ConsoleOuput(outputStr=outputStr)
-            console.print(output)
+            console.print(output=ConsoleOuput(outputStr=outputStr))
             return None
 
         self._lastTaskId = taskId
@@ -205,12 +201,12 @@ class ArgumentLine:
 
 class ArgumentLineAdd(ArgumentLine):
 
-    _projectName:ProjectName
+    _projectName    :ProjectName
     _taskDescription:TaskDescription = None
 
     def __init__(self, projectName:ProjectName, taskDescription:TaskDescription=None) -> None:
-        self._projectName = projectName
-        self._taskDescription = taskDescription
+        self._projectName       = projectName
+        self._taskDescription   = taskDescription
 
     def addProject(self, programDatas:ProgramDatas) -> None:
         programDatas.addProject(Project(name=self._projectName))
@@ -245,8 +241,8 @@ class SubCommand:
 
         if self._type.isTask():
             argumentLineSplited = argumentLineStr.split(" ")
-            projectName = ProjectName(projetNameStr=argumentLineSplited[0])
-            taskDescription = TaskDescription(taskDescriptionStr=argumentLineSplited[1])
+            projectName         = ProjectName(projetNameStr=argumentLineSplited[0])
+            taskDescription     = TaskDescription(taskDescriptionStr=argumentLineSplited[1])
             return ArgumentLineAdd(projectName=projectName, taskDescription=taskDescription)
 
     def executeAdd(self, argumentLine:ArgumentLineAdd, programDatas:ProgramDatas, console:Console) -> None:
@@ -258,13 +254,13 @@ class SubCommand:
 
 class CommandRest:
 
-    _subCommand:SubCommand
-    _argumentLine:ArgumentLine
+    _subCommand     :SubCommand
+    _argumentLine   :ArgumentLine
 
     def __init__(self, subCommand:SubCommand=None, argumentLineStr:str=None, taskId:TaskId=None) -> None:
         if subCommand is not None:
-            self._subCommand = subCommand
-            self._argumentLine = self._subCommand.createArgumentLineAdd(argumentLineStr=argumentLineStr)
+            self._subCommand    = subCommand
+            self._argumentLine  = self._subCommand.createArgumentLineAdd(argumentLineStr=argumentLineStr)
             return
 
         if taskId is not None:
@@ -289,10 +285,10 @@ class Command:
 
     def createCommandRest(self, commandRestStr:str) -> CommandRest:
         if self._type.isAdd():
-            commandRestStrSplited = commandRestStr.split(" ", 1)
-            subCommandStr   = commandRestStrSplited[0]
-            argumentLineStr    = commandRestStrSplited[1]
-            subCommand = SubCommand(type=SubCommandType(subCommandStr=subCommandStr))
+            commandRestStrSplited   = commandRestStr.split(" ", 1)
+            subCommandStr           = commandRestStrSplited[0]
+            argumentLineStr         = commandRestStrSplited[1]
+            subCommand              = SubCommand(type=SubCommandType(subCommandStr=subCommandStr))
             return CommandRest(subCommand=subCommand, argumentLineStr=argumentLineStr)
 
         if self._type.isCheck() or self._type.isUncheck():
@@ -305,8 +301,7 @@ class Command:
     def execute(self, commandRest:CommandRest, programDatas:ProgramDatas, console:Console) -> None:
 
         if self._type.isShow():
-            output = ConsoleOuput(outputStr=str(programDatas))
-            console.print(output=output)
+            console.print(output=ConsoleOuput(outputStr=str(programDatas)))
             return
 
         if self._type.isAdd():
@@ -322,27 +317,25 @@ class Command:
             return
 
         if self._type.isHelp():
-            output = ConsoleOuput()
-            console.print(output=output)
+            console.print(output=ConsoleOuput())
             return
 
         if self._type.isError():
             outputStr = f"I don't know what the command {self._type} is."
-            output = ConsoleOuput(outputStr=outputStr)
-            console.print(output)
+            console.print(output=ConsoleOuput(outputStr=outputStr))
             return
 
 class CommandLine:
 
-    _command:Command
+    _command    :Command
     _commandRest:CommandRest = None
 
     def __init__(self, commandLineStr:str) -> None:
 
-        commandLineStr = commandLineStr.strip()
-        commandLineSplited = commandLineStr.split(" ", 1)
-        commandStr = commandLineSplited[0]
-        self._command = Command(type=CommandType(commandStr=commandStr))
+        commandLineStr      = commandLineStr.strip()
+        commandLineSplited  = commandLineStr.split(" ", 1)
+        commandStr          = commandLineSplited[0]
+        self._command       = Command(type=CommandType(commandStr=commandStr))
 
         if len(commandLineSplited) > 1:
             self._commandRest = self._command.createCommandRest(commandRestStr=commandLineSplited[1])
@@ -355,20 +348,21 @@ class CommandLine:
 
 class ProgramLoop:
 
-    _console:Console
-    _programDatas:ProgramDatas
+    _console        :Console
+    _programDatas   :ProgramDatas
 
     def __init__(self, console: Console) -> None:
 
-        self._console = console
-        self._programDatas = ProgramDatas()
+        self._console       = console
+        self._programDatas  = ProgramDatas()
 
     def run(self) -> None:
         # 2 identation, à modif
         while True:
 
-            commandLineStr = self._console.inputPrompt()
-            commandLine = CommandLine(commandLineStr=commandLineStr)
+            commandLineStr  = self._console.inputPrompt()
+            commandLine     = CommandLine(commandLineStr=commandLineStr)
+
             if commandLine.isQuit(): # comparer avec command quit (faire 2 version)
                 break
 

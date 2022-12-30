@@ -4,11 +4,11 @@ from primitiveWrapper import ConsoleOuput
 
 class Console:
 
-    _input_reader:IO
-    _output_writer:IO
+    _input_reader   :IO
+    _output_writer  :IO
 
     def __init__(self, input_reader: IO, output_writer: IO) -> None:
-        self._input_reader = input_reader
+        self._input_reader  = input_reader
         self._output_writer = output_writer
 
     def _write(self, output:ConsoleOuput) -> None:
