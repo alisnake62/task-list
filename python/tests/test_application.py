@@ -23,11 +23,7 @@ os.system(
     "show\n" +
     "quit' | /usr/bin/python3 python/task_list/"
 )
-# p.stdin.write(("print('toto')\n").encode())
 
-
-
-# print(p.communicate())
 # class ApplicationTest(unittest.TestCase):
 #     PROMPT = "> "
 #     TIMEOUT = 2
