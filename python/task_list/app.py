@@ -1,6 +1,6 @@
 from typing import List
 
-from primitiveWrapper import ConsoleOuput, TaskDescription, TaskDone, TaskFounded, TaskId, ProjectFounded, ProjectName, CommandType, SubCommandType
+from primitiveWrapper import ConsoleOuput, TaskDescription, TaskDone, TaskFounded, TaskId, ProjectFounded, ProjectName, CommandType, SubCommandType, LoopContinue
 from console import Console
 
 class TaskIdentity:
@@ -295,8 +295,10 @@ class Command:
             taskId = TaskId(taskIdInt=int(commandRestStr))
             return CommandRest(taskId=taskId)
 
-    def isQuit(self) -> bool:  # comparer avec command quit (faire 2 version)
-        return self._type.isQuit()
+    def loopContinue(self) -> LoopContinue:  # comparer avec command quit (faire 2 version)
+        if self._type.isQuit():
+            return LoopContinue(loopContinueBooleanValue=False)
+        return LoopContinue(loopContinueBooleanValue=True)
 
     def execute(self, commandRest:CommandRest, programDatas:ProgramDatas, console:Console) -> None:
 
@@ -343,8 +345,8 @@ class CommandLine:
     def execute(self, programDatas:ProgramDatas, console:Console) -> None:
         self._command.execute(commandRest=self._commandRest, programDatas=programDatas, console=console)
 
-    def isQuit(self) -> bool:   # comparer avec command quit (faire 2 version)
-        return self._command.isQuit()
+    def loopContinue(self) -> LoopContinue:
+        return self._command.loopContinue()
 
 class ProgramLoop:
 
@@ -357,13 +359,13 @@ class ProgramLoop:
         self._programDatas  = ProgramDatas()
 
     def run(self) -> None:
-        # 2 identation, à modif
-        while True:
+        
+        loopContinue = LoopContinue()
+        while loopContinue == LoopContinue(loopContinueBooleanValue=True):
 
             commandLineStr  = self._console.inputPrompt()
             commandLine     = CommandLine(commandLineStr=commandLineStr)
 
-            if commandLine.isQuit(): # comparer avec command quit (faire 2 version)
-                break
+            loopContinue = commandLine.loopContinue()
 
             commandLine.execute(programDatas=self._programDatas, console=self._console)

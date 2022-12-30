@@ -149,3 +149,13 @@ class CommandType:
 
     def isError(self) -> bool:
         return self._value not in self._expectedValue
+
+class LoopContinue:
+
+    _value:bool
+
+    def __init__(self, loopContinueBooleanValue:bool = True) -> None:
+        self._value = loopContinueBooleanValue
+
+    def __eq__(self, otherLoopContinue: object) -> bool:
+        return self._value == otherLoopContinue._value
